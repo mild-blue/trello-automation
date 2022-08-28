@@ -58,7 +58,11 @@ def check_date(card_id):
 
 
 if __name__ == '__main__':
-    boardID = input("Enter ID of a board you want to search:")
+    b = int(input("Enter number of boards you want to search:"))
+    boardsID = []
+    for i in range(b):
+        boardStr = "Enter ID of board no." + str(i+1) + ":"
+        boardsID.append(input(boardStr))
     newListID = input("Enter ID of a list you want to update:")
     n = int(input("Enter number of members you're searching for:"))
     membersID = []
@@ -68,4 +72,5 @@ if __name__ == '__main__':
     day, month, year = map(int, input("Furthest due date (Format: DD.MM.YYYY):").split('.'))
     end_date = datetime.date(year, month, day)
 
-    search_board(boardID)
+    for i in range(b):
+        search_board(boardsID[i])
