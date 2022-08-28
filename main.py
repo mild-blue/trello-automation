@@ -1,25 +1,9 @@
 import requests
 import json
+import datetime
+from secrets import *
 
 mainEndpoint = "https://api.trello.com/1/"
-print("Enter Trello API key:")
-trelloKey = input()
-print("Enter Trello API token:")
-trelloToken = input()
-print("Enter ID of a board you want to search:")
-boardID = input()
-print("Enter ID of a list you want to update:")
-newListID = input()
-print("Enter number of members you're searching for:")
-n = int(input())
-membersID = []
-for i in range(n):
-    print("Enter ID of ", i+1, ". member")
-    membersID.append(input())
-
-print("Furthest due date (Format: DD.MM.YYYY):")
-x = input().split('.')
-end_date = [int(x[2]), int(x[1]), int(x[0])]
 
 
 def search_board(board_id):
@@ -30,6 +14,22 @@ def search_board(board_id):
     for list in lists_on_board:
         if list['id'] != newListID:
             search_list(list['id'])
+
+
+def make_request(url: str, method: str = "GET", data: dict = None):
+    headers = {
+        "Accept": "application/json"
+    }
+    params = {'key': trelloKey, 'token': trelloToken}
+
+    response = requests.request(
+        method,
+        url,
+        headers=headers,
+        params=params,
+        data=data
+    )
+    return response
 
 
 def search_list(listID):
@@ -54,21 +54,20 @@ def check_date(card_id):
     response = requests.get(check_date_endpoint, json=query_body)
     date_on_card = json.loads(response.text)
     y = date_on_card['_value'].split('T')
-    z = y[0].split('-')
-    date = [int(z[0]), int(z[1]), int(z[2])]
-    return compare(date, 0)
+    card_year, card_month, card_day = map(int, y[0].split('-'))
+    card_date = datetime.date(card_year, card_month, card_day)
+    return card_date <= end_date
 
 
-def compare(arr, j):
-    if arr[j] < end_date[j]:
-        return True
-    elif arr[j] == end_date[j]:
-        if j == 2:      # if the days are same too then include it too
-            return True
-        else:
-            return compare(arr, j+1)
-    else:
-        return False
+if __name__ == '__main__':
+    boardID = input("Enter ID of a board you want to search:")
+    newListID = input("Enter ID of a list you want to update:")
+    n = int(input("Enter number of members you're searching for:"))
+    membersID = []
+    for i in range(n):
+        memberStr = "Enter ID of member no. " + str(i+1) + ":"
+        membersID.append(input(memberStr))
+    day, month, year = map(int, input("Furthest due date (Format: DD.MM.YYYY):").split('.'))
+    end_date = datetime.date(year, month, day)
 
-
-search_board(boardID)
+    search_board(boardID)
