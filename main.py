@@ -68,8 +68,6 @@ def print_id_of_my_boards(member_id: str):
     print(id_dictionary)
 
 
-
-
 if __name__ == '__main__':
     mainEndpoint = "https://api.trello.com/1/"
     day, month, year = map(int, input_furthest_date.split('.'))
