@@ -1,8 +1,8 @@
 import requests
 import json
 import datetime
-from secrets import *
-from settings import *
+from my_secrets import trelloKey, trelloToken
+from my_settings import boards_id, target_list_id, members_id, input_furthest_date
 
 
 def make_request(url: str, method: str = "GET", params: dict = None, data: dict = None):
@@ -35,8 +35,8 @@ def search_list(searched_list_id: str):
     response = make_request(mainEndpoint + "lists/" + searched_list_id + "/cards")
     cards_on_list = json.loads(response.text)
     for card in cards_on_list:
-        for user_id in members_id:
-            if (user_id in card['idMembers']) and (check_date(card['id'])):
+        for name in members_id:
+            if (members_id[name] in card['idMembers']) and (check_date(card['id'])):
                 copy_card(card['id'], target_list_id)
 
 
