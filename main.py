@@ -20,7 +20,6 @@ def make_request(url: str, method: str = "GET", params: dict = None, data: dict 
         params=full_params,
         data=data
     )
-    print(type(response))
     return response
 
 
