@@ -62,4 +62,4 @@ if __name__ == '__main__':
     furthest_date = datetime.date(year, month, day)
 
     for i in boards_id:
-        search_board(boards_id[i])
+        search_board(i)
