@@ -28,18 +28,22 @@ def make_trello_request(url: str, method: str = "GET", params: dict = None, data
 def search_board(searched_board_id, target_list_id=DEFAULT_TARGET_LIST_ID):
     response = make_trello_request(f"boards/{searched_board_id}/lists")
     lists_on_board = json.loads(response.text)
+    source_list_ids = []
     for searched_list in lists_on_board:
         if searched_list['id'] != target_list_id:
-            search_list(searched_list['id'], target_list_id)
+            source_list_ids.append(searched_list['id'])
+    return source_list_ids
 
 
 def search_list(searched_list_id, target_list_id=DEFAULT_TARGET_LIST_ID):
     response = make_trello_request(f"lists/{searched_list_id}/cards")
     cards_on_list = json.loads(response.text)
+    source_card_ids = []
     for card in cards_on_list:
         for name in MEMBER_IDS:
             if (MEMBER_IDS[name] in card['idMembers']) and (check_due_date(card['id'])):
-                copy_card(card['id'], target_list_id)
+                source_card_ids.append(card['id'])
+    return source_card_ids
 
 
 def copy_card(card_id, target_list_id):
@@ -62,5 +66,11 @@ def check_due_date(card_id):
 
 if __name__ == '__main__':
     latest_due_date = datetime.strptime(INPUT_LATEST_DUE_DATE, "%d.%m.%Y").date()
+    all_source_list_ids = []
     for board_id in BOARD_IDS:
-        search_board(board_id)
+        all_source_list_ids = all_source_list_ids + search_board(board_id)
+    all_source_card_ids = []
+    for source_list_id in all_source_list_ids:
+        all_source_card_ids = all_source_card_ids + search_list(source_list_id)
+    for source_card_id in all_source_card_ids:
+        copy_card(source_card_id, DEFAULT_TARGET_LIST_ID)
