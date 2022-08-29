@@ -2,7 +2,7 @@ import requests
 import json
 import datetime
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
-from my_settings import BOARD_IDS, DEFAULT_TARGET_LIST_ID, MEMBER_NAME_ID_PAIRS, NUMBER_OF_DAYS_TO_COSNIDER_IN_THE_SEARCH
+from my_settings import BOARD_IDS, DEFAULT_TARGET_LIST_ID, MEMBER_NAME_ID_PAIRS, NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH
 
 
 def make_trello_request(url_add_on: str, method: str = "GET", params: dict = None, data: dict = None):
@@ -73,6 +73,6 @@ def print_id_of_my_boards(member_id: str):
 
 
 if __name__ == '__main__':
-    latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_COSNIDER_IN_THE_SEARCH)
+    latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
     for board_id in BOARD_IDS:
         search_board(board_id)
