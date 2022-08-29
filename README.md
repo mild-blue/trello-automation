@@ -4,6 +4,7 @@ A tool to improve Trello.
 # Setup:
 For the application to work you need a Trello API key and token. Both can be generated on this site:
 https://trello.com/app-key
+
 Save those values in 'my_secrets.py' as shown in 'my_secrets_example.py'
 
 # IDs:
