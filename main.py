@@ -1,8 +1,8 @@
 import requests
 import json
 import datetime
-from my_secrets import *
-from my_settings import *
+from my_secrets import trelloKey, trelloToken
+from my_settings import boards_id, target_list_id, members_id, input_furthest_date
 
 
 def make_request(url: str, method: str = "GET", params: dict = None, data: dict = None):
