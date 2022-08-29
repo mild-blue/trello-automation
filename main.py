@@ -10,17 +10,16 @@ def make_trello_request(url_add_on: str, method: str = "GET", params: dict = Non
     headers = {
         "Accept": "application/json"
     }
-    url = f"https://api.trello.com/1/{url_add_on}"
-    full_params = {'key': TRELLO_KEY, 'token': TRELLO_TOKEN}
-    if params:
-        full_params.update(params)
-
+    full_url = f"https://api.trello.com/1/{url}"
+    full_data = {'key': TRELLO_KEY, 'token': TRELLO_TOKEN}
+    if data:
+        full_data.update(data)
     response = requests.request(
         method,
         url,
         headers=headers,
-        params=full_params,
-        data=data
+        params=params,
+        data=full_data
     )
     return response
 
@@ -49,7 +48,7 @@ def search_list(searched_list_id, target_list_id=DEFAULT_TARGET_LIST_ID):
 def copy_card(card_id: str, target_list_id: str):
     make_trello_request("cards",
                         method="POST",
-                        params={"idList": target_list_id, "idCardSource": card_id}
+                        data={"idList": target_list_id, "idCardSource": card_id}
                         )
 
 
