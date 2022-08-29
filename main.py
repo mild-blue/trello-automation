@@ -56,10 +56,10 @@ def check_date(card_id: str):
     return card_date <= furthest_date
 
 def print_id_of_my_boards(member_id: str):
-    response = make_request(mainEndpoint + "members/" + member_id + "/boards")
-    print(response.text)
-
-
+    response = make_request(mainEndpoint + "members/me")
+    text = json.loads(response.text)
+    print("Ides of boards I'm a member of:")
+    print(text["idBoards"])
 
 
 
