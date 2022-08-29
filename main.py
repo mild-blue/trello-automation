@@ -1,7 +1,7 @@
 import requests
 import json
 import datetime
-from secrets import *
+from my_secrets import *
 from settings import *
 
 
