@@ -67,7 +67,7 @@ if __name__ == '__main__':
     mainEndpoint = "https://api.trello.com/1/"
     day, month, year = map(int, input_furthest_date.split('.'))
     furthest_date = datetime.date(year, month, day)
-    print_id_of_my_boards(members_id[0])
+    print_id_of_my_boards(members_id["Peter"])
 
     for i in boards_id:
         search_board(i)
