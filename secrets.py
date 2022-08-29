@@ -1,2 +1,2 @@
-trelloKey = "d4412efffa156d0b7366d851baf8433e"
-trelloToken = "8c5561b693898ea5ead94826d33d8ddf8dc8d36a2fa99be6f39fa3895f0f7693"
+trelloKey = "f15a2fb9f9e575e42804c011aebf8e16"
+trelloToken = "514db9eb8b12b571953d80a5cd7d9b106419519c3833fc01d7030a9bc16a696a"
