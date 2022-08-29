@@ -35,8 +35,8 @@ def search_list(searched_list_id):
     response = make_request(mainEndpoint + "lists/" + searched_list_id + "/cards")
     cards_on_list = json.loads(response.text)
     for card in cards_on_list:
-        for user_id in members_id:
-            if (user_id in card['idMembers']) and (check_date(card['id'])):
+        for name in members_id:
+            if (members_id[name] in card['idMembers']) and (check_date(card['id'])):
                 copy_card(card['id'], target_list_id)
 
 
