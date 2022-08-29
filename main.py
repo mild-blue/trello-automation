@@ -58,8 +58,15 @@ def check_date(card_id: str):
 def print_id_of_my_boards(member_id: str):
     response = make_request(mainEndpoint + "members/me")
     text = json.loads(response.text)
-    print("Ides of boards I'm a member of:")
-    print(text["idBoards"])
+    print("IDs of boards I'm a member of:")
+    IDs = text["idBoards"]
+    id_dictionary = {}
+    for id in IDs:
+        response_board = make_request(mainEndpoint + "boards/" + id)
+        text_board = json.loads(response_board.text)
+        id_dictionary[text_board["name"]] = id
+    print(id_dictionary)
+
 
 
 
