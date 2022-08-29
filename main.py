@@ -1,6 +1,6 @@
 import requests
 import json
-from datetime import datetime
+import datetime
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
 from my_settings import BOARD_IDS, DEFAULT_TARGET_LIST_ID, MEMBER_NAME_ID_PAIRS, INPUT_LATEST_DUE_DATE
 
@@ -53,7 +53,7 @@ def check_due_date(card_id: str) -> bool:
     date_on_card_dict = json.loads(response.text)
     date_on_card = date_on_card_dict['_value']
     if date_on_card:
-        card_date = datetime.strptime(date_on_card, "%Y-%m-%dT%H:%M:%S.%fZ").date()
+        card_date = datetime.datetime.strptime(date_on_card, "%Y-%m-%dT%H:%M:%S.%fZ").date()
         return card_date <= latest_due_date
     else:
         return False
@@ -73,6 +73,6 @@ def print_id_of_my_boards(member_id: str):
 
 
 if __name__ == '__main__':
-    latest_due_date = datetime.strptime(INPUT_LATEST_DUE_DATE, "%d.%m.%Y").date()
+    latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_CONSUDER_IN_THE_SEARCH)
     for board_id in BOARD_IDS:
         search_board(board_id)
