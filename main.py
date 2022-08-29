@@ -72,11 +72,13 @@ def print_id_of_my_boards(member_id: str):
         id_dictionary[response_board_dict["name"]] = identity
         print(response_board_dict["name"] + " - " + identity)
 
+
 def print_ids_of_board_members(board_id: str):
     response = make_request(mainEndpoint + "boards/" + board_id + "/members")
     members = json.loads(response.text)
     for member in members:
         print(member["fullName"] + " - " + member["id"])
+
 
 if __name__ == '__main__':
     latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
