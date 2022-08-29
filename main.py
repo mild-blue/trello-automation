@@ -60,6 +60,6 @@ def check_due_date(card_id):
 
 
 if __name__ == '__main__':
-    latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_CONSUDER_IN_THE_SEARCH)
+    latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_COSNIDER_IN_THE_SEARCH)
     for board_id in BOARD_IDS:
         search_board(board_id)
