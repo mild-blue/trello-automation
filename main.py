@@ -2,7 +2,7 @@ import requests
 import json
 import datetime
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
-from my_settings import BOARD_IDS, DEFAULT_TARGET_LIST_ID, MEMBER_IDS, LATEST_DUE_DATE
+from my_settings import BOARD_IDS, DEFAULT_TARGET_LIST_ID, MEMBER_IDS, INPUT_LATEST_DUE_DATE
 
 
 def make_request(url: str, method: str = "GET", params: dict = None, data: dict = None):
@@ -50,15 +50,16 @@ def copy_card(card_id, target_list_id):
 
 def check_due_date(card_id):
     response = make_request("cards/" + card_id + "/due")
-    date_on_card = json.loads(response.text)
-    unformatted_date = date_on_card['_value'].split('T')
-    card_year, card_month, card_day = map(int, unformatted_date[0].split('-'))
-    card_date = datetime.date(card_year, card_month, card_day)
-    return card_date <= furthest_date
+    date_on_card_dict = json.loads(response.text)
+    date_on_card = date_on_card_dict['_value']
+    if date_on_card:
+        card_date = datetime.datetime.strptime(date_on_card, "%Y-%m-%dT%H:%M:%S.%fZ").date()
+        return card_date <= latest_due_date
+    else:
+        return False
 
 
 if __name__ == '__main__':
-    day, month, year = map(int, LATEST_DUE_DATE.split('.'))
-    furthest_date = datetime.date(year, month, day)
+    latest_due_date = datetime.datetime.strptime(INPUT_LATEST_DUE_DATE, "%d.%m.%Y").date()
     for board in BOARD_IDS:
         search_board(board)
