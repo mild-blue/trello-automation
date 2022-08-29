@@ -73,6 +73,6 @@ def print_id_of_my_boards(member_id: str):
 
 
 if __name__ == '__main__':
-    latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_CONSUDER_IN_THE_SEARCH)
+    latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_COSNIDER_IN_THE_SEARCH)
     for board_id in BOARD_IDS:
         search_board(board_id)
