@@ -5,7 +5,7 @@ from my_secrets import trelloKey, trelloToken
 from my_settings import boards_id, target_list_id, members_id, input_furthest_date
 
 
-def make_request(url: str, method: str = "GET", params: dict = None, data: dict = None):
+def make_request(url: str, method: str = "GET", params: dict = None, data: dict = None) -> requests.models.Response:
     headers = {
         "Accept": "application/json"
     }
@@ -20,6 +20,7 @@ def make_request(url: str, method: str = "GET", params: dict = None, data: dict 
         params=full_params,
         data=data
     )
+    print(type(response))
     return response
 
 
