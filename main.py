@@ -74,9 +74,11 @@ def print_id_of_my_boards(member_id: str):
 
 
 def print_ids_of_board_members(board_id: str):
-    response = make_request(mainEndpoint + "boards/" + board_id + "/members")
-    members = json.loads(response.text)
+    members_json = make_request(mainEndpoint + "boards/" + board_id + "/members")
+    members = json.loads(members_json.text)
+    board_members_ids = {}
     for member in members:
+        board_members_ids[member["fullName"]] = member["id"]
         print(member["fullName"] + " - " + member["id"])
 
 
