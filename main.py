@@ -47,7 +47,7 @@ def copy_card(card_id: str, target_list_id: str):
                  )
 
 
-def check_date(card_id: str):
+def check_date(card_id: str) -> bool:
     response = make_request(mainEndpoint + "cards/" + card_id + "/due")
     date_on_card = json.loads(response.text)
     unformatted_date = date_on_card['_value'].split('T')
