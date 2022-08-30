@@ -3,7 +3,7 @@ import json
 import datetime
 from datetime import datetime
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
-from my_settings import BOARD_IDS, DEFAULT_TARGET_LIST_ID, MEMBER_IDS, INPUT_LATEST_DUE_DATE
+from my_settings import BOARD_IDS, DEFAULT_TARGET_LIST_ID, MEMBER_NAME_ID_PAIRS, INPUT_LATEST_DUE_DATE
 
 
 def make_trello_request(url: str, method: str = "GET", params: dict = None, data: dict = None):
@@ -39,9 +39,10 @@ def search_list(searched_list_id, target_list_id=DEFAULT_TARGET_LIST_ID):
     cards_on_list = json.loads(response.text)
     source_card_ids = []
     for card in cards_on_list:
-        for name in MEMBER_IDS:
-            if (MEMBER_IDS[name] in card['idMembers']) and (check_due_date(card['id'])):
+        for name in MEMBER_NAME_ID_PAIRS:
+            if (MEMBER_NAME_ID_PAIRS[name] in card['idMembers']) and (check_due_date(card['id'])):
                 source_card_ids.append(card['id'])
+                break
     return source_card_ids
 
 
