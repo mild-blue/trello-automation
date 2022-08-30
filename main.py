@@ -1,11 +1,12 @@
 import requests
 import json
 import datetime
+from requests import Response
 from my_secrets import trelloKey, trelloToken
 from my_settings import boards_id, target_list_id, members_id, number_of_days_to_consider_in_the_search
 
 
-def make_request(url: str, method: str = "GET", params: dict = None, data: dict = None):
+def make_request(url: str, method: str = "GET", params: dict = None, data: dict = None) -> Response:
     headers = {
         "Accept": "application/json"
     }
@@ -23,7 +24,7 @@ def make_request(url: str, method: str = "GET", params: dict = None, data: dict 
     return response
 
 
-def search_board(searched_board_id):
+def search_board(searched_board_id: str):
     response = make_request(mainEndpoint + "boards/" + searched_board_id + "/lists")
     lists_on_board = json.loads(response.text)
     for list in lists_on_board:
@@ -31,7 +32,7 @@ def search_board(searched_board_id):
             search_list(list['id'])
 
 
-def search_list(searched_list_id):
+def search_list(searched_list_id: str):
     response = make_request(mainEndpoint + "lists/" + searched_list_id + "/cards")
     cards_on_list = json.loads(response.text)
     for card in cards_on_list:
@@ -40,20 +41,33 @@ def search_list(searched_list_id):
                 copy_card(card['id'], target_list_id)
 
 
-def copy_card(card_id, target_list_id):
+def copy_card(card_id: str, target_list_id: str):
     make_request(url=mainEndpoint + "cards",
                  method="POST",
                  params={"idList": target_list_id, "idCardSource": card_id}
                  )
 
 
-def check_date(card_id):
+def check_date(card_id: str) -> bool:
     response = make_request(mainEndpoint + "cards/" + card_id + "/due")
     date_on_card = json.loads(response.text)
     unformatted_date = date_on_card['_value'].split('T')
     card_year, card_month, card_day = map(int, unformatted_date[0].split('-'))
     card_date = datetime.date(card_year, card_month, card_day)
     return card_date <= furthest_date
+
+
+def print_id_of_my_boards(member_id: str):
+    response_members = make_request(mainEndpoint + "members/me")
+    response_members_dict = json.loads(response_members.text)
+    print("IDs of boards I'm a member of:")
+    ids = response_members_dict["idBoards"]
+    id_dictionary = {}
+    for identity in ids:
+        response_board = make_request(mainEndpoint + "boards/" + identity)
+        response_board_dict = json.loads(response_board.text)
+        id_dictionary[response_board_dict["name"]] = identity
+        print(response_board_dict["name"] + " - " + identity)
 
 
 if __name__ == '__main__':
