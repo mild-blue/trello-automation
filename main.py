@@ -2,7 +2,7 @@ import requests
 import json
 import datetime
 from my_secrets import trelloKey, trelloToken
-from my_settings import boards_id, target_list_id, members_id, input_furthest_date
+from my_settings import boards_id, target_list_id, members_id, number_of_days_to_consider_in_the_search
 
 
 def make_request(url: str, method: str = "GET", params: dict = None, data: dict = None):
@@ -58,8 +58,6 @@ def check_date(card_id):
 
 if __name__ == '__main__':
     mainEndpoint = "https://api.trello.com/1/"
-    day, month, year = map(int, input_furthest_date.split('.'))
-    furthest_date = datetime.date(year, month, day)
-
+    furthest_date = datetime.date.today() + datetime.timedelta(days=number_of_days_to_consider_in_the_search)
     for i in boards_id:
         search_board(i)
