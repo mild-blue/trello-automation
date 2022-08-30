@@ -5,7 +5,7 @@ from my_secrets import trelloKey, trelloToken
 from my_settings import boards_id, target_list_id, members_id, input_furthest_date
 
 
-def make_request(url: str, method: str = "GET", params: dict = None, data: dict = None) -> requests.models.Response:
+def make_request(url: str, method: str = "GET", params: dict = None, data: dict = None) -> requests:
     headers = {
         "Accept": "application/json"
     }
@@ -55,24 +55,23 @@ def check_date(card_id: str) -> bool:
     card_date = datetime.date(card_year, card_month, card_day)
     return card_date <= furthest_date
 
+
 def print_id_of_my_boards(member_id: str):
-    response = make_request(mainEndpoint + "members/me")
-    text = json.loads(response.text)
+    response_members = make_request(mainEndpoint + "members/me")
+    response_members_dict = json.loads(response_members.text)
     print("IDs of boards I'm a member of:")
-    IDs = text["idBoards"]
+    ids = response_members_dict["idBoards"]
     id_dictionary = {}
-    for id in IDs:
-        response_board = make_request(mainEndpoint + "boards/" + id)
-        text_board = json.loads(response_board.text)
-        id_dictionary[text_board["name"]] = id
-    print(id_dictionary)
+    for identity in ids:
+        response_board = make_request(mainEndpoint + "boards/" + identity)
+        response_board_dict = json.loads(response_board.text)
+        id_dictionary[response_board_dict["name"]] = identity
+        print(response_board_dict["name"] + " - " + identity)
 
 
 if __name__ == '__main__':
     mainEndpoint = "https://api.trello.com/1/"
     day, month, year = map(int, input_furthest_date.split('.'))
     furthest_date = datetime.date(year, month, day)
-    print_id_of_my_boards(members_id["Peter"])
-
     for i in boards_id:
         search_board(i)
