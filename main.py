@@ -1,22 +1,22 @@
 import requests
 import json
-import datetime
+from datetime import datetime
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
-from my_settings import BOARD_IDS, DEFAULT_TARGET_LIST_ID, MEMBER_IDS, INPUT_LATEST_DUE_DATE
+from my_settings import BOARD_IDS, DEFAULT_TARGET_LIST_ID, MEMBER_NAME_ID_PAIRS, INPUT_LATEST_DUE_DATE
 
 
-def make_trello_request(url: str, method: str = "GET", params: dict = None, data: dict = None):
+def make_trello_request(url_add_on: str, method: str = "GET", params: dict = None, data: dict = None):
     headers = {
         "Accept": "application/json"
     }
-    full_url = f"https://api.trello.com/1/{url}"
+    url = f"https://api.trello.com/1/{url_add_on}"
     full_params = {'key': TRELLO_KEY, 'token': TRELLO_TOKEN}
     if params:
         full_params.update(params)
 
     response = requests.request(
         method,
-        full_url,
+        url,
         headers=headers,
         params=full_params,
         data=data
@@ -36,8 +36,8 @@ def search_list(searched_list_id, target_list_id=DEFAULT_TARGET_LIST_ID):
     response = make_trello_request(f"lists/{searched_list_id}/cards")
     cards_on_list = json.loads(response.text)
     for card in cards_on_list:
-        for name in MEMBER_IDS:
-            if (MEMBER_IDS[name] in card['idMembers']) and (check_due_date(card['id'])):
+        for name in MEMBER_NAME_ID_PAIRS:
+            if (MEMBER_NAME_ID_PAIRS[name] in card['idMembers']) and (check_due_date(card['id'])):
                 copy_card(card['id'], target_list_id)
 
 
