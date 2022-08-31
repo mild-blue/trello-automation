@@ -1,16 +1,17 @@
 import requests
 import json
 import datetime
-from requests import Response
-from my_secrets import trelloKey, trelloToken
-from my_settings import boards_id, target_list_id, members_id, number_of_days_to_consider_in_the_search
+from my_secrets import TRELLO_KEY, TRELLO_TOKEN
+from my_settings import BOARD_IDS, DEFAULT_TARGET_LIST_ID, MEMBER_NAME_ID_PAIRS,\
+    NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH
 
 
-def make_request(url: str, method: str = "GET", params: dict = None, data: dict = None) -> Response:
+def make_trello_request(url_add_on: str, method: str = "GET", params: dict = None, data: dict = None):
     headers = {
         "Accept": "application/json"
     }
-    full_params = {'key': trelloKey, 'token': trelloToken}
+    url = f"https://api.trello.com/1/{url_add_on}"
+    full_params = {'key': TRELLO_KEY, 'token': TRELLO_TOKEN}
     if params:
         full_params.update(params)
 
@@ -24,54 +25,55 @@ def make_request(url: str, method: str = "GET", params: dict = None, data: dict 
     return response
 
 
-def search_board(searched_board_id: str):
-    response = make_request(mainEndpoint + "boards/" + searched_board_id + "/lists")
+def search_board(searched_board_id, target_list_id=DEFAULT_TARGET_LIST_ID):
+    response = make_trello_request(f"boards/{searched_board_id}/lists")
     lists_on_board = json.loads(response.text)
-    for list in lists_on_board:
-        if list['id'] != target_list_id:
-            search_list(list['id'])
+    for searched_list in lists_on_board:
+        if searched_list['id'] != target_list_id:
+            search_list(searched_list['id'], target_list_id)
 
 
-def search_list(searched_list_id: str):
-    response = make_request(mainEndpoint + "lists/" + searched_list_id + "/cards")
+def search_list(searched_list_id, target_list_id=DEFAULT_TARGET_LIST_ID):
+    response = make_trello_request(f"lists/{searched_list_id}/cards")
     cards_on_list = json.loads(response.text)
     for card in cards_on_list:
-        for name in members_id:
-            if (members_id[name] in card['idMembers']) and (check_date(card['id'])):
+        for name in MEMBER_NAME_ID_PAIRS:
+            if (MEMBER_NAME_ID_PAIRS[name] in card['idMembers']) and (check_due_date(card['id'])):
                 copy_card(card['id'], target_list_id)
 
 
 def copy_card(card_id: str, target_list_id: str):
-    make_request(url=mainEndpoint + "cards",
-                 method="POST",
-                 params={"idList": target_list_id, "idCardSource": card_id}
-                 )
+    make_trello_request("cards",
+                        method="POST",
+                        params={"idList": target_list_id, "idCardSource": card_id}
+                        )
 
 
-def check_date(card_id: str) -> bool:
-    response = make_request(mainEndpoint + "cards/" + card_id + "/due")
-    date_on_card = json.loads(response.text)
-    unformatted_date = date_on_card['_value'].split('T')
-    card_year, card_month, card_day = map(int, unformatted_date[0].split('-'))
-    card_date = datetime.date(card_year, card_month, card_day)
-    return card_date <= furthest_date
+def check_due_date(card_id: str) -> bool:
+    response = make_trello_request(f"cards/{card_id}/due")
+    date_on_card_dict = json.loads(response.text)
+    date_on_card = date_on_card_dict['_value']
+    if date_on_card:
+        card_date = datetime.datetime.strptime(date_on_card, "%Y-%m-%dT%H:%M:%S.%fZ").date()
+        return card_date <= latest_due_date
+    else:
+        return False
 
 
 def print_id_of_my_boards(member_id: str):
-    response_members = make_request(mainEndpoint + "members/me")
+    response_members = make_trello_request("members/me")
     response_members_dict = json.loads(response_members.text)
     print("IDs of boards I'm a member of:")
     ids = response_members_dict["idBoards"]
     id_dictionary = {}
     for identity in ids:
-        response_board = make_request(mainEndpoint + "boards/" + identity)
+        response_board = make_trello_request("boards/" + identity)
         response_board_dict = json.loads(response_board.text)
         id_dictionary[response_board_dict["name"]] = identity
         print(response_board_dict["name"] + " - " + identity)
 
 
 if __name__ == '__main__':
-    mainEndpoint = "https://api.trello.com/1/"
-    furthest_date = datetime.date.today() + datetime.timedelta(days=number_of_days_to_consider_in_the_search)
-    for i in boards_id:
-        search_board(i)
+    latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
+    for board_id in BOARD_IDS:
+        search_board(board_id)

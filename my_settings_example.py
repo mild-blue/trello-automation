@@ -1,5 +1,5 @@
 # THESE ARE JUST DUMMY VALUES, CREATE YOUR OWN SETTINGS IN 'my_settings.py' IN THIS FORMAT:
-boards_id = ["dummyBoardID1", "dummyBoardID2"]
-target_list_id = "dummyTargetListID"
-members_id = ["dummyMemberID1", "dummyMemberID2", "dummyMemberID3"]
-number_of_days_to_consider_in_the_search = 5
+BOARD_IDS = ["dummyBoardID1", "dummyBoardID2"]
+DEFAULT_TARGET_LIST_ID = "dummyTargetListID"
+MEMBER_NAME_ID_PAIRS = {"Name1": "IDName1", "Name2": "IDName2"}
+NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH = 5
