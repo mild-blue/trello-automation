@@ -1,8 +1,8 @@
-import requests
-import json
 import datetime
+import json
+import requests
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
-from my_settings import BOARD_IDS, DEFAULT_TARGET_LIST_ID, MEMBER_NAME_ID_PAIRS,\
+from my_settings import BOARD_IDS, DEFAULT_TARGET_LIST_ID, MEMBER_NAME_ID_PAIRS, \
     NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH
 
 
@@ -73,13 +73,14 @@ def print_id_of_my_boards(member_id: str):
         print(response_board_dict["name"] + " - " + identity)
 
 
-def print_ids_of_board_members(board_id: str):
-    members_json = make_request(mainEndpoint + "boards/" + board_id + "/members")
+def get_name_id_pairs_of_board_members(board_id: str) -> dict:
+    members_json = make_trello_request("boards/" + board_id + "/members")
     members = json.loads(members_json.text)
     board_members_ids = {}
     for member in members:
         board_members_ids[member["fullName"]] = member["id"]
         print(member["fullName"] + " - " + member["id"])
+    return board_members_ids
 
 
 if __name__ == '__main__':
