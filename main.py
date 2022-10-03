@@ -10,13 +10,13 @@ def make_trello_request(url_add_on: str, method: str = "GET", params: dict = Non
     headers = {
         "Accept": "application/json"
     }
-    full_url = f"https://api.trello.com/1/{url}"
+    full_url = f"https://api.trello.com/1/{url_add_on}"
     full_data = {'key': TRELLO_KEY, 'token': TRELLO_TOKEN}
     if data:
         full_data.update(data)
     response = requests.request(
         method,
-        url,
+        full_url,
         headers=headers,
         params=params,
         data=full_data
@@ -24,7 +24,7 @@ def make_trello_request(url_add_on: str, method: str = "GET", params: dict = Non
     return response
 
 
-def search_board(searched_board_id, target_list_id=DEFAULT_TARGET_LIST_ID):
+def search_board(searched_board_id: int, target_list_id: int = DEFAULT_TARGET_LIST_ID):
     response = make_trello_request(f"boards/{searched_board_id}/lists")
     lists_on_board = json.loads(response.text)
     source_list_ids = []
@@ -34,7 +34,7 @@ def search_board(searched_board_id, target_list_id=DEFAULT_TARGET_LIST_ID):
     return source_list_ids
 
 
-def search_list(searched_list_id, target_list_id=DEFAULT_TARGET_LIST_ID):
+def search_list(searched_list_id: int, target_list_id: int = DEFAULT_TARGET_LIST_ID):
     response = make_trello_request(f"lists/{searched_list_id}/cards")
     cards_on_list = json.loads(response.text)
     source_card_ids = []
