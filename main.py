@@ -22,7 +22,10 @@ def make_trello_request(url_add_on: str, method: str = "GET", params: dict = Non
         params=full_params,
         data=data
     )
-    return response
+    if response.status_code == 200:
+        return response
+    else:
+        response.raise_for_status()
 
 
 def search_board(searched_board_id: int, target_list_id: int = DEFAULT_TARGET_LIST_ID):
