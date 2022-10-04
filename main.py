@@ -60,7 +60,7 @@ def check_due_date(card_id: str) -> bool:
         return False
 
 
-def print_id_of_my_boards(member_id: str):
+def print_id_of_my_boards():
     response_members = make_trello_request("members/me")
     response_members_dict = json.loads(response_members.text)
     print("IDs of boards I'm a member of:")
@@ -73,8 +73,8 @@ def print_id_of_my_boards(member_id: str):
         print(response_board_dict["name"] + " - " + identity)
 
 
-def get_name_id_pairs_of_board_members(board_id: str) -> dict:
-    members_json = make_trello_request("boards/" + board_id + "/members")
+def get_name_id_pairs_of_board_members(target_board_id: str) -> dict:
+    members_json = make_trello_request("boards/" + target_board_id + "/members")
     members = json.loads(members_json.text)
     board_members_ids = {}
     for member in members:
