@@ -20,4 +20,3 @@ repos:
       - id: check-symlinks
       - id: trailing-whitespace
       - id: double-quote-string-fixer
-        files: ".py"
