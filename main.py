@@ -1,6 +1,7 @@
 import requests
 import json
 import datetime
+from types import SimpleNamespace
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
 from my_settings import BOARD_IDS, DEFAULT_TARGET_LIST_ID, MEMBER_NAME_ID_PAIRS,\
     NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH
@@ -25,24 +26,39 @@ def make_trello_request(url_add_on: str, method: str = "GET", params: dict = Non
     return response
 
 
+class ConvertJsonToObject:
+    def __init__(self, data=None):
+        if data is not None:
+            for key, value in data.items():
+                setattr(self, key, value)
+
+
+def load_data(data):
+    list_of_objects = []
+    data_as_dict = json.loads(data)
+    for sub_data in data_as_dict:
+        list_of_objects.append(ConvertJsonToObject(sub_data))
+    return list_of_objects
+
+
 def search_board(searched_board_id: int, target_list_id: int = DEFAULT_TARGET_LIST_ID):
     response = make_trello_request(f"boards/{searched_board_id}/lists")
-    lists_on_board = json.loads(response.text)
+    lists_on_board = load_data(response.text)
     source_list_ids = []
     for searched_list in lists_on_board:
-        if searched_list['id'] != target_list_id:
-            source_list_ids.append(searched_list['id'])
+        if searched_list.id != target_list_id:
+            source_list_ids.append(searched_list.id)
     return source_list_ids
 
 
 def search_list(searched_list_id: int, target_list_id: int = DEFAULT_TARGET_LIST_ID):
     response = make_trello_request(f"lists/{searched_list_id}/cards")
-    cards_on_list = json.loads(response.text)
+    cards_on_list = load_data(response.text)
     source_card_ids = []
     for card in cards_on_list:
         for name in MEMBER_NAME_ID_PAIRS:
-            if (MEMBER_NAME_ID_PAIRS[name] in card['idMembers']) and (check_due_date(card['id'])):
-                source_card_ids.append(card['id'])
+            if (MEMBER_NAME_ID_PAIRS[name] in card.idMembers) and (check_due_date(card.id)):
+                source_card_ids.append(card.id)
     return source_card_ids
 
 
@@ -55,8 +71,7 @@ def copy_card(card_id: str, target_list_id: str):
 
 def check_due_date(card_id: str) -> bool:
     response = make_trello_request(f"cards/{card_id}/due")
-    date_on_card_dict = json.loads(response.text)
-    date_on_card = date_on_card_dict['_value']
+    date_on_card = json.loads(response.text, object_hook=lambda d: SimpleNamespace(**d))._value
     if date_on_card:
         card_date = datetime.datetime.strptime(date_on_card, "%Y-%m-%dT%H:%M:%S.%fZ").date()
         return card_date <= latest_due_date
