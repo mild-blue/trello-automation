@@ -1,8 +1,8 @@
-import requests
-import json
 import datetime
+import json
+import requests
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
-from my_settings import BOARD_IDS, DEFAULT_TARGET_LIST_ID, MEMBER_NAME_ID_PAIRS,\
+from my_settings import BOARD_IDS, DEFAULT_TARGET_LIST_ID, MEMBER_NAME_ID_PAIRS, \
     NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH
 
 
@@ -64,7 +64,7 @@ def check_due_date(card_id: str) -> bool:
         return False
 
 
-def print_id_of_my_boards(member_id: str):
+def print_id_of_my_boards():
     response_members = make_trello_request("members/me")
     response_members_dict = json.loads(response_members.text)
     print("IDs of boards I'm a member of:")
@@ -75,6 +75,26 @@ def print_id_of_my_boards(member_id: str):
         response_board_dict = json.loads(response_board.text)
         id_dictionary[response_board_dict["name"]] = identity
         print(response_board_dict["name"] + " - " + identity)
+
+
+def get_name_id_pairs_of_board_members(investigated_board_id: str) -> dict:
+    members_json = make_trello_request("boards/" + investigated_board_id + "/members")
+    members = json.loads(members_json.text)
+    board_members_ids = {}
+    for member in members:
+        board_members_ids[member["fullName"]] = member["id"]
+        print(member["fullName"] + " - " + member["id"])
+    return board_members_ids
+
+
+def get_board_list_name_id_pairs(investigated_board_id: str) -> dict:
+    response = make_trello_request('boards/' + investigated_board_id + '/lists')
+    lists_on_a_board_dict = json.loads(response.text)
+    print("Name ID pairs of lists on a board", investigated_board_id)
+    board_list_name_id_pairs_dict = {}
+    for list_on_a_board in lists_on_a_board_dict:
+        board_list_name_id_pairs_dict[list_on_a_board['name']] = list_on_a_board['id']
+    return board_list_name_id_pairs_dict
 
 
 if __name__ == '__main__':
