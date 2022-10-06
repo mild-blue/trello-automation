@@ -73,8 +73,8 @@ def print_id_of_my_boards():
         print(response_board_dict["name"] + " - " + identity)
 
 
-def get_name_id_pairs_of_board_members(target_board_id: str) -> dict:
-    members_json = make_trello_request("boards/" + target_board_id + "/members")
+def get_name_id_pairs_of_board_members(investigated_board_id: str) -> dict:
+    members_json = make_trello_request("boards/" + investigated_board_id + "/members")
     members = json.loads(members_json.text)
     board_members_ids = {}
     for member in members:
