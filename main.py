@@ -83,7 +83,7 @@ def get_name_id_pairs_of_board_members(investigated_board_id: str) -> dict:
     return board_members_ids
 
 
-def get_board_list_name_id_pairs(investigated_board_id: str):
+def get_board_list_name_id_pairs(investigated_board_id: str) -> dict:
     response = make_trello_request('boards/' + investigated_board_id + '/lists')
     lists_on_a_board_dict = json.loads(response.text)
     print("Name ID pairs of lists on a board", investigated_board_id)
@@ -91,6 +91,7 @@ def get_board_list_name_id_pairs(investigated_board_id: str):
     for list_on_a_board in lists_on_a_board_dict:
         board_list_name_id_pairs_dict[list_on_a_board['name']] = list_on_a_board['id']
     return board_list_name_id_pairs_dict
+
 
 if __name__ == '__main__':
     latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
