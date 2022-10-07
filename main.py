@@ -11,9 +11,9 @@ def make_trello_request(url_add_on: str, method: str = "GET", params: dict = Non
         "Accept": "application/json"
     }
     full_url = f"https://api.trello.com/1/{url_add_on}"
-    full_params = {'key': TRELLO_KEY, 'token': TRELLO_TOKEN}
-    if params:
-        full_params.update(params)
+    full_data = {'key': TRELLO_KEY, 'token': TRELLO_TOKEN}
+    if data:
+        full_data.update(data)
 
     response = requests.request(
         method,
