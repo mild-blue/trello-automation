@@ -54,7 +54,7 @@ def copy_card(card_id: str, target_list_id: str):
                                    method='POST',
                                    params={'idList': target_list_id, 'idCardSource': card_id}
                                    )
-    copy_checked_items_from_checklist(card_id, json.loads(response.text)['id'])
+    copy_checked_items_from_checklists(card_id, json.loads(response.text)['id'])
 
 
 def check_due_date(card_id: str) -> bool:
@@ -101,17 +101,16 @@ def get_board_list_name_id_pairs(investigated_board_id: str) -> dict:
     return board_list_name_id_pairs_dict
 
 
-def copy_checked_items_from_checklist(investigated_card_id: str, target_card_id: str):
+def copy_checked_items_from_checklists(investigated_card_id: str, target_card_id: str):
     response_source = make_trello_request('cards/' + investigated_card_id + '/checklists')
-    items_on_a_source_card_dict = json.loads(response_source.text)
+    source_checklists_dict = json.loads(response_source.text)
     response_target = make_trello_request('cards/' + target_card_id + '/checklists')
-    items_on_a_target_card_dict = json.loads(response_target.text)
+    target_checklists_dict = json.loads(response_target.text)
 
-    for check_list_source, check_list_target in zip(items_on_a_source_card_dict, items_on_a_target_card_dict):
-        print(check_list_target)
-        for item_source, item_target in zip(check_list_source['checkItems'], check_list_target['checkItems']):
-            params = {'state': item_source['state']}
-            make_trello_request('cards/' + target_card_id + '/checkItem/' + item_target['id'],
+    for checklist_source, checklist_target in zip(source_checklists_dict, target_checklists_dict):
+        for check_item_source, check_item_target in zip(checklist_source['checkItems'], checklist_target['checkItems']):
+            params = {'state': check_item_source['state']}
+            make_trello_request('cards/' + target_card_id + '/checkItem/' + check_item_target['id'],
                                 method="PUT", params=params)
 
 
