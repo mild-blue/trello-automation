@@ -1,6 +1,8 @@
 import datetime
 import json
+
 import requests
+
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
 from my_settings import (BOARD_IDS, DEFAULT_TARGET_LIST_ID,
                          MEMBER_NAME_ID_PAIRS,
@@ -48,10 +50,11 @@ def search_list(searched_list_id: int, target_list_id: int = DEFAULT_TARGET_LIST
 
 
 def copy_card(card_id: str, target_list_id: str):
-    make_trello_request('cards',
-                        method='POST',
-                        params={'idList': target_list_id, 'idCardSource': card_id}
-                        )
+    response = make_trello_request('cards',
+                                   method='POST',
+                                   params={'idList': target_list_id, 'idCardSource': card_id}
+                                   )
+    copy_checked_items_from_checklist(card_id, json.loads(response.text)['id'])
 
 
 def check_due_date(card_id: str) -> bool:
@@ -96,6 +99,20 @@ def get_board_list_name_id_pairs(investigated_board_id: str) -> dict:
     for list_on_a_board in lists_on_a_board_dict:
         board_list_name_id_pairs_dict[list_on_a_board['name']] = list_on_a_board['id']
     return board_list_name_id_pairs_dict
+
+
+def copy_checked_items_from_checklist(investigated_card_id: str, target_card_id: str):
+    response_source = make_trello_request('cards/' + investigated_card_id + '/checklists')
+    items_on_a_source_card_dict = json.loads(response_source.text)
+    response_target = make_trello_request('cards/' + target_card_id + '/checklists')
+    items_on_a_target_card_dict = json.loads(response_target.text)
+
+    for check_list_source, check_list_target in zip(items_on_a_source_card_dict, items_on_a_target_card_dict):
+        print(check_list_target)
+        for item_source, item_target in zip(check_list_source['checkItems'], check_list_target['checkItems']):
+            params = {'state': item_source['state']}
+            make_trello_request('cards/' + target_card_id + '/checkItem/' + item_target['id'],
+                                method="PUT", params=params)
 
 
 if __name__ == '__main__':
