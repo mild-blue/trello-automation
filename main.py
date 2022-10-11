@@ -1,8 +1,6 @@
 import datetime
 import json
-
 import requests
-
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
 from my_settings import (BOARD_IDS, DEFAULT_TARGET_LIST_ID,
                          IDS_OF_LISTS_TO_EXCLUDE, MEMBER_NAME_ID_PAIRS,
@@ -13,17 +11,16 @@ def make_trello_request(url_add_on: str, method: str = 'GET', params: dict = Non
     headers = {
         'Accept': 'application/json'
     }
-    url = f'https://api.trello.com/1/{url_add_on}'
-    full_params = {'key': TRELLO_KEY, 'token': TRELLO_TOKEN}
-    if params:
-        full_params.update(params)
-
+    full_url = f"https://api.trello.com/1/{url_add_on}"
+    full_data = {'key': TRELLO_KEY, 'token': TRELLO_TOKEN}
+    if data:
+        full_data.update(data)
     response = requests.request(
         method,
-        url,
+        full_url,
         headers=headers,
-        params=full_params,
-        data=data
+        params=params,
+        data=full_data
     )
     if response.status_code == 200:
         return response
@@ -55,10 +52,10 @@ def search_list(searched_list_id: int, latest_due_date: datetime.date):
 
 
 def copy_card(card_id: str, target_list_id: str):
-    response = make_trello_request('cards',
-                                   method='POST',
-                                   params={'idList': target_list_id, 'idCardSource': card_id}
-                                   )
+    response = make_trello_request("cards",
+                        method="POST",
+                        data={"idList": target_list_id, "idCardSource": card_id}
+                        )
     copy_checked_items_from_checklists(card_id, json.loads(response.text)['id'])
 
 
