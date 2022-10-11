@@ -37,13 +37,13 @@ def search_board(searched_board_id: int, target_list_id: int = DEFAULT_TARGET_LI
     return source_list_ids
 
 
-def search_list(searched_list_id: int):
+def search_list(searched_list_id: int, latest_due_date: datetime.date):
     response = make_trello_request(f'lists/{searched_list_id}/cards')
     cards_on_list = json.loads(response.text)
     source_card_ids = []
     for card in cards_on_list:
         for name in MEMBER_NAME_ID_PAIRS:
-            if (MEMBER_NAME_ID_PAIRS[name] in card['idMembers']) and (check_due_date(card['id'])):
+            if (MEMBER_NAME_ID_PAIRS[name] in card['idMembers']) and (check_due_date(card['id'], latest_due_date)):
                 source_card_ids.append(card['id'])
     return source_card_ids
 
@@ -56,8 +56,7 @@ def copy_card(card_id: str, target_list_id: str):
     copy_checked_items_from_checklists(card_id, json.loads(response.text)['id'])
 
 
-def check_due_date(card_id: str) -> bool:
-    latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
+def check_due_date(card_id: str, latest_due_date: datetime.date) -> bool:
     response = make_trello_request(f'cards/{card_id}/due')
     date_on_card_dict = json.loads(response.text)
     date_on_card = date_on_card_dict['_value']
@@ -114,17 +113,21 @@ def copy_checked_items_from_checklists(investigated_card_id: str, target_card_id
 
 
 
-def copy_cards_with_tagged_members_to_list():
+def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: datetime.date):
     all_source_list_ids = []
-
     for board_id in BOARD_IDS:
         all_source_list_ids = all_source_list_ids +search_board(board_id)
 all_source_card_ids = []
     for source_list_id in all_source_list_ids:
-        all_source_card_ids = all_source_card_ids + search_list(source_list_id)
+        all_source_card_ids = all_source_card_ids + search_list(source_list_id, latest_due_date)
     for source_card_id in all_source_card_ids:
         copy_card(source_card_id, DEFAULT_TARGET_LIST_ID)
 
 
+def main():
+    latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
+    copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date)
+
+
 if __name__ == '__main__':
-    copy_cards_with_tagged_members_to_list()
+    main()
