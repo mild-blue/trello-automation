@@ -51,6 +51,7 @@ def search_list(searched_list_id: int, latest_due_date: datetime.date):
         for name in MEMBER_NAME_ID_PAIRS:
             if (MEMBER_NAME_ID_PAIRS[name] in card['idMembers']) and (check_due_date(card['id'], latest_due_date)):
                 source_card_ids.append(card['id'])
+                break
     return source_card_ids
 
 
