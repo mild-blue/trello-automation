@@ -43,6 +43,7 @@ def search_list(searched_list_id: int, target_list_id: int = DEFAULT_TARGET_LIST
         for name in MEMBER_NAME_ID_PAIRS:
             if (MEMBER_NAME_ID_PAIRS[name] in card['idMembers']) and (check_due_date(card['id'])):
                 source_card_ids.append(card['id'])
+                break
     return source_card_ids
 
 
