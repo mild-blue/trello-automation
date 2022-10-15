@@ -2,6 +2,7 @@ import datetime
 import json
 import requests
 from types import SimpleNamespace
+from types import SimpleNamespace
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
 from my_settings import BOARD_IDS, DEFAULT_TARGET_LIST_ID, MEMBER_NAME_ID_PAIRS, \
     NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH
