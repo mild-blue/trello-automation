@@ -1,3 +1,3 @@
 # THESE ARE JUST DUMMY VALUES, SAVE YOUR OWN KEY-TOKEN PAIR IN 'my_secrets.py' IN THIS FORMAT:
-TRELLO_KEY = "123dummykey"
-TRELLO_TOKEN = "456dummytoken"
+TRELLO_KEY = '123dummykey'
+TRELLO_TOKEN = '456dummytoken'
