@@ -1,9 +1,12 @@
 import datetime
 import json
+
 import requests
+
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
-from my_settings import BOARD_IDS, DEFAULT_TARGET_LIST_ID, MEMBER_NAME_ID_PAIRS, \
-    NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH, IDS_OF_LISTS_TO_EXCLUDE
+from my_settings import (BOARD_IDS, DEFAULT_TARGET_LIST_ID,
+                         IDS_OF_LISTS_TO_EXCLUDE, MEMBER_NAME_ID_PAIRS,
+                         NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
 
 
 def make_trello_request(url_add_on: str, method: str = 'GET', params: dict = None, data: dict = None):
@@ -25,12 +28,12 @@ def make_trello_request(url_add_on: str, method: str = 'GET', params: dict = Non
     return response
 
 
-def search_board(searched_board_id: int, target_list_id: int = DEFAULT_TARGET_LIST_ID,
+def search_board(searched_board_id: int,
                  lists_to_exclude: list = IDS_OF_LISTS_TO_EXCLUDE):
-    response = make_trello_request(f"boards/{searched_board_id}/lists")
+    response = make_trello_request(f'boards/{searched_board_id}/lists')
     lists_on_board = json.loads(response.text)
     source_list_ids = []
-    lists_to_exclude = lists_to_exclude + [target_list_id]
+    lists_to_exclude = lists_to_exclude + DEFAULT_TARGET_LIST_ID
     for searched_list in lists_on_board:
         if searched_list['id'] not in lists_to_exclude:
             source_list_ids.append(searched_list['id'])
@@ -67,7 +70,7 @@ def check_due_date(card_id: str, latest_due_date: datetime.date) -> bool:
         return False
 
 
-def print_id_of_my_boards():
+def get_id_of_my_boards():
     response_members = make_trello_request('members/me')
     response_members_dict = json.loads(response_members.text)
     print("IDs of boards I'm a member of:")
@@ -78,7 +81,7 @@ def print_id_of_my_boards():
         response_board_dict = json.loads(response_board.text)
         id_dictionary[response_board_dict['name']] = identity
         print(response_board_dict['name'] + ' - ' + identity)
-
+    return id_dictionary
 
 def get_name_id_pairs_of_board_members(investigated_board_id: str) -> dict:
     members_json = make_trello_request('boards/' + investigated_board_id + '/members')
@@ -97,7 +100,9 @@ def get_board_list_name_id_pairs(investigated_board_id: str) -> dict:
     board_list_name_id_pairs_dict = {}
     for list_on_a_board in lists_on_a_board_dict:
         board_list_name_id_pairs_dict[list_on_a_board['name']] = list_on_a_board['id']
+        print(list_on_a_board['name']+' - '+ list_on_a_board['id'])
     return board_list_name_id_pairs_dict
+
 
 def copy_checked_items_from_checklists(investigated_card_id: str, target_card_id: str):
     response_source = make_trello_request('cards/' + investigated_card_id + '/checklists')
@@ -112,12 +117,11 @@ def copy_checked_items_from_checklists(investigated_card_id: str, target_card_id
                                 method='PUT', params=params)
 
 
-
 def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: datetime.date):
     all_source_list_ids = []
     for board_id in BOARD_IDS:
         all_source_list_ids = all_source_list_ids +search_board(board_id)
-all_source_card_ids = []
+    all_source_card_ids = []
     for source_list_id in all_source_list_ids:
         all_source_card_ids = all_source_card_ids + search_list(source_list_id, latest_due_date)
     for source_card_id in all_source_card_ids:
