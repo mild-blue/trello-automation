@@ -1,6 +1,8 @@
 import datetime
 import json
+
 import requests
+
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
 from my_settings import (BOARD_IDS, DEFAULT_TARGET_LIST_ID,
                          MEMBER_NAME_ID_PAIRS,
@@ -48,10 +50,11 @@ def search_list(searched_list_id: int, target_list_id: int = DEFAULT_TARGET_LIST
 
 
 def copy_card(card_id: str, target_list_id: str):
-    make_trello_request('cards',
-                        method='POST',
-                        params={'idList': target_list_id, 'idCardSource': card_id}
-                        )
+    response = make_trello_request('cards',
+                                   method='POST',
+                                   params={'idList': target_list_id, 'idCardSource': card_id}
+                                   )
+    copy_checked_items_from_checklists(card_id, json.loads(response.text)['id'])
 
 
 def check_due_date(card_id: str) -> bool:
@@ -79,31 +82,45 @@ def print_id_of_my_boards():
 
 
 def get_name_id_pairs_of_board_members(investigated_board_id: str) -> dict:
-    members_json = make_trello_request("boards/" + investigated_board_id + "/members")
+    members_json = make_trello_request('boards/' + investigated_board_id + '/members')
     members = json.loads(members_json.text)
     board_members_ids = {}
     for member in members:
-        board_members_ids[member["fullName"]] = member["id"]
-        print(member["fullName"] + " - " + member["id"])
+        board_members_ids[member['fullName']] = member['id']
+        print(member['fullName'] + ' - ' + member['id'])
     return board_members_ids
 
 
 def get_board_list_name_id_pairs(investigated_board_id: str) -> dict:
     response = make_trello_request('boards/' + investigated_board_id + '/lists')
     lists_on_a_board_dict = json.loads(response.text)
-    print("Name ID pairs of lists on a board", investigated_board_id)
+    print('Name ID pairs of lists on a board', investigated_board_id)
     board_list_name_id_pairs_dict = {}
     for list_on_a_board in lists_on_a_board_dict:
         board_list_name_id_pairs_dict[list_on_a_board['name']] = list_on_a_board['id']
     return board_list_name_id_pairs_dict
 
 
+def copy_checked_items_from_checklists(investigated_card_id: str, target_card_id: str):
+    response_source = make_trello_request('cards/' + investigated_card_id + '/checklists')
+    source_checklists_dict = json.loads(response_source.text)
+    response_target = make_trello_request('cards/' + target_card_id + '/checklists')
+    target_checklists_dict = json.loads(response_target.text)
+
+    for checklist_source, checklist_target in zip(source_checklists_dict, target_checklists_dict):
+        for check_item_source, check_item_target in zip(checklist_source['checkItems'], checklist_target['checkItems']):
+            params = {'state': check_item_source['state']}
+            make_trello_request('cards/' + target_card_id + '/checkItem/' + check_item_target['id'],
+                                method='PUT', params=params)
+
+
 if __name__ == '__main__':
     latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
     all_source_list_ids = []
     for board_id in BOARD_IDS:
-        all_source_list_ids = all_source_list_ids +search_board(board_id)
-all_source_card_ids = []
+        all_source_list_ids = all_source_list_ids + search_board(board_id)
+
+    all_source_card_ids = []
     for source_list_id in all_source_list_ids:
         all_source_card_ids = all_source_card_ids + search_list(source_list_id)
     for source_card_id in all_source_card_ids:
