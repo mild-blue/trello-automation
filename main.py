@@ -70,7 +70,7 @@ def check_due_date(card_id: str, latest_due_date: datetime.date) -> bool:
         return False
 
 
-def get_id_of_my_boards():
+def get_name_id_pairs_of_my_boards():
     response_members = make_trello_request('members/me')
     response_members_dict = json.loads(response_members.text)
     print("IDs of boards I'm a member of:")
@@ -82,6 +82,7 @@ def get_id_of_my_boards():
         id_dictionary[response_board_dict['name']] = identity
         print(response_board_dict['name'] + ' - ' + identity)
     return id_dictionary
+
 
 def get_name_id_pairs_of_board_members(investigated_board_id: str) -> dict:
     members_json = make_trello_request('boards/' + investigated_board_id + '/members')
@@ -100,7 +101,7 @@ def get_board_list_name_id_pairs(investigated_board_id: str) -> dict:
     board_list_name_id_pairs_dict = {}
     for list_on_a_board in lists_on_a_board_dict:
         board_list_name_id_pairs_dict[list_on_a_board['name']] = list_on_a_board['id']
-        print(list_on_a_board['name']+' - '+ list_on_a_board['id'])
+        print(list_on_a_board['name'] + ' - ' + list_on_a_board['id'])
     return board_list_name_id_pairs_dict
 
 
@@ -120,7 +121,7 @@ def copy_checked_items_from_checklists(investigated_card_id: str, target_card_id
 def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: datetime.date):
     all_source_list_ids = []
     for board_id in BOARD_IDS:
-        all_source_list_ids = all_source_list_ids +search_board(board_id)
+        all_source_list_ids = all_source_list_ids + search_board(board_id)
     all_source_card_ids = []
     for source_list_id in all_source_list_ids:
         all_source_card_ids = all_source_card_ids + search_list(source_list_id, latest_due_date)
