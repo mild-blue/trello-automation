@@ -141,4 +141,7 @@ def main():
 
 
 if __name__ == '__main__':
+    # get_name_id_pairs_of_my_boards()
+    # get_name_id_pairs_of_board_members(BOARD_IDS[0])
+    # get_board_list_name_id_pairs(BOARD_IDS[0])
     main()

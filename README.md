@@ -16,12 +16,8 @@ https://trello.com/app-key
 
 
 # IDs:
-You also need the IDs of boards you want to search, members you want to search for and ID of the list you want to copy the cards in.
-The easiest way to get these is directly through the Trello website:
-1. Go to the board you want to search.
-2. Click on a card in the list that you want to place the new cards in. (If it doesn't exist yet then create one.)
-3. On the bottom right click on 'Share' and then 'Export JSON'.
-4. In the JSON file you can easily search for 'idBoard', 'idList' and 'idMembers'.
-5. Optionally paste ID's of lists you want to exclude from search to IDS_OF_LISTS_TO_EXCLUDE . (The target ID is excluded automatically.)
-
-These ID's then need to be saved in 'my_settings.py' as shown in 'my_settings_example.py' .
+You also need the IDs of boards you want to search, members you want to search for and ID of the list you want to copy the cards in:
+1. Run `get_name_id_pairs_of_my_boards()` then paste the id to `BOARD_IDS` variable in `my_settings.py`. If you don't have this file create it according to `my_settings_example.py`.
+2. Run `get_name_id_pairs_of_board_members(BOARD_IDS[0])` and `get_board_list_name_id_pairs(BOARD_IDS[0])` and fill the missing variables in `my_settings.py`.
+3. Optionally paste ID's of lists you want to exclude to IDS_OF_LISTS_TO_EXCLUDE . (The target ID is excluded automatically.)
+4. After this initial setup only the `main()` function should be run to perform the functionality.
