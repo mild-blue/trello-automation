@@ -1,8 +1,6 @@
 import datetime
 import json
-
 import requests
-
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
 from my_settings import (BOARD_IDS, DEFAULT_TARGET_LIST_ID,
                          IDS_OF_LISTS_TO_EXCLUDE, MEMBER_NAME_ID_PAIRS,
@@ -46,12 +44,11 @@ def search_board(searched_board_id: int,
 def search_list(searched_list_id: int, latest_due_date: datetime.date):
     response = make_trello_request(f'lists/{searched_list_id}/cards')
     cards_on_list = json.loads(response.text)
-    source_card_ids = []
+    source_card_ids = set()
     for card in cards_on_list:
         for name in MEMBER_NAME_ID_PAIRS:
-            if (MEMBER_NAME_ID_PAIRS[name] in card['idMembers']) and (check_due_date(card['id'], latest_due_date)):
-                source_card_ids.append(card['id'])
-                break
+            if (MEMBER_NAME_ID_PAIRS[name] in card['idMembers']) and (check_due_date(card['id'])):
+                source_card_ids.add(card['id'])
     return source_card_ids
 
 
@@ -126,9 +123,9 @@ def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: d
     all_source_list_ids = []
     for board_id in BOARD_IDS:
         all_source_list_ids = all_source_list_ids + search_board(board_id)
-    all_source_card_ids = []
+    all_source_card_ids = set()
     for source_list_id in all_source_list_ids:
-        all_source_card_ids = all_source_card_ids + search_list(source_list_id, latest_due_date)
+        all_source_card_ids.update(search_list(source_list_id))
     for source_card_id in all_source_card_ids:
         copy_card(source_card_id, DEFAULT_TARGET_LIST_ID)
 
