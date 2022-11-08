@@ -33,7 +33,7 @@ def search_board(searched_board_id: int,
     response = make_trello_request(f'boards/{searched_board_id}/lists')
     lists_on_board = json.loads(response.text)
     source_list_ids = []
-    lists_to_exclude = lists_to_exclude + DEFAULT_TARGET_LIST_ID
+    lists_to_exclude.append(DEFAULT_TARGET_LIST_ID)
     for searched_list in lists_on_board:
         if searched_list['id'] not in lists_to_exclude:
             source_list_ids.append(searched_list['id'])
@@ -52,10 +52,7 @@ def search_list(searched_list_id: int, latest_due_date: datetime.date):
 
 
 def copy_card(card_id: str, target_list_id: str):
-    response = make_trello_request("cards",
-                        method="POST",
-                        data={"idList": target_list_id, "idCardSource": card_id}
-                        )
+    response = make_trello_request("cards", method="POST", data={"idList": target_list_id, "idCardSource": card_id})
     copy_checked_items_from_checklists(card_id, json.loads(response.text)['id'])
 
 
