@@ -46,11 +46,10 @@ def search_list(searched_list_id: int, latest_due_date: datetime.date):
     source_card_ids = []
     for card in cards_on_list:
         for name in MEMBER_NAME_ID_PAIRS:
-
-            if MEMBER_NAME_ID_PAIRS[name] in card['idMembers']:
-                if check_due_date(card['id'], latest_due_date):
-                    if card['badges']['dueComplete'] is False:
-                        source_card_ids.append(card['id'])
+            if (MEMBER_NAME_ID_PAIRS[name] in card['idMembers']) and \
+                    (check_due_date(card['id'], latest_due_date)) and \
+                    (card['badges']['dueComplete'] is False):
+                source_card_ids.append(card['id'])
 
     return source_card_ids
 
