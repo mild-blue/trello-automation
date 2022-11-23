@@ -109,8 +109,8 @@ def copy_card(card: Card, target_list_id: str) -> None:
     copy_checked_items_from_checklists(card, json.loads(response.text)['id'])
 
 
-def get_list_cards_ids(list_id: str) -> list:
-    response = make_trello_request(f'lists/{list_id}/cards')
+def get_target_list_card_ids() -> list:
+    response = make_trello_request(f'lists/{DEFAULT_TARGET_LIST_ID}/cards')
     response_dict = json.loads(response.text)
     card_id_list = []
     for card in response_dict:
@@ -128,16 +128,14 @@ def get_source_card_id(card_id: str) -> str:
 
 
 def get_list_of_card_ids_previously_copied() -> list:
-    target_list_card_ids = []
-    for list_id in LIST_IDS_TO_IGNORE:
-        target_list_card_ids.extend(get_list_cards_ids(list_id))
+    target_list_card_ids = get_target_list_card_ids()
     copied_cards_ids = []
-    for card_id in target_list_card_ids:
-        copied_cards_ids.append(get_source_card_id(card_id))
+    for id in target_list_card_ids:
+        copied_cards_ids.append(get_source_card_id(id))
     return copied_cards_ids
 
 
-def get_name_id_pairs_of_my_boards() -> dict:
+def get_name_id_pairs_of_my_boards():
     response_members = make_trello_request('members/me')
     response_members_dict = json.loads(response_members.text)
     print("IDs of boards I'm a member of:")
