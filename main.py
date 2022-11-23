@@ -1,6 +1,8 @@
 import datetime
 import json
+
 import requests
+
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
 from my_settings import (BOARD_IDS, DEFAULT_TARGET_LIST_ID,
                          IDS_OF_LISTS_TO_EXCLUDE, MEMBER_NAME_ID_PAIRS,
@@ -11,7 +13,7 @@ def make_trello_request(url_add_on: str, method: str = 'GET', params: dict = Non
     headers = {
         'Accept': 'application/json'
     }
-    full_url = f"https://api.trello.com/1/{url_add_on}"
+    full_url = f'https://api.trello.com/1/{url_add_on}'
     full_data = {'key': TRELLO_KEY, 'token': TRELLO_TOKEN}
     if data:
         full_data.update(data)
@@ -54,7 +56,7 @@ def search_list(searched_list_id: int, latest_due_date: datetime.date):
 
 
 def copy_card(card_id: str, target_list_id: str):
-    response = make_trello_request("cards", method="POST", data={"idList": target_list_id, "idCardSource": card_id})
+    response = make_trello_request('cards', method='POST', data={'idList': target_list_id, 'idCardSource': card_id})
     copy_checked_items_from_checklists(card_id, json.loads(response.text)['id'])
 
 
@@ -67,6 +69,32 @@ def check_due_date(card_id: str, latest_due_date: datetime.date) -> bool:
         return card_date <= latest_due_date
     else:
         return False
+
+
+def get_target_list_card_ids() -> list:
+    response = make_trello_request(f'lists/{DEFAULT_TARGET_LIST_ID}/cards')
+    response_dict = json.loads(response.text)
+    card_id_list = []
+    for card in response_dict:
+        card_id_list.append(card['id'])
+    return card_id_list
+
+
+def get_source_card_id(card_id: str) -> str:
+    payload = {'filter': 'copyCard'}
+    response = make_trello_request(f'cards/{card_id}/actions', params=payload)
+    response_list = json.loads(response.text)
+    if response_list:
+        source_id = response_list[0]['data']['cardSource']['id']
+        return source_id
+
+
+def get_list_of_card_ids_previously_copied() -> list:
+    target_list_card_ids = get_target_list_card_ids()
+    copied_cards_ids = []
+    for id in target_list_card_ids:
+        copied_cards_ids.append(get_source_card_id(id))
+    return copied_cards_ids
 
 
 def get_name_id_pairs_of_my_boards():
@@ -118,6 +146,7 @@ def copy_checked_items_from_checklists(investigated_card_id: str, target_card_id
 
 
 def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: datetime.date):
+    card_ids_previously_copied = get_list_of_card_ids_previously_copied()
     all_source_list_ids = []
     for board_id in BOARD_IDS:
         all_source_list_ids = all_source_list_ids + search_board(board_id)
@@ -125,7 +154,8 @@ def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: d
     for source_list_id in all_source_list_ids:
         all_source_card_ids.update(search_list(searched_list_id=source_list_id, latest_due_date=latest_due_date))
     for source_card_id in all_source_card_ids:
-        copy_card(source_card_id, DEFAULT_TARGET_LIST_ID)
+        if source_card_id not in card_ids_previously_copied:
+            copy_card(source_card_id, DEFAULT_TARGET_LIST_ID)
 
 
 def main():
