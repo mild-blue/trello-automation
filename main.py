@@ -16,8 +16,8 @@ def make_trello_request(url_add_on: str, method: str = 'GET', params: dict = Non
     if data:
         full_data.update(data)
     response = requests.request(
-        method,
-        full_url,
+        method=method,
+        url=full_url,
         headers=headers,
         params=params,
         data=full_data
