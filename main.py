@@ -28,6 +28,38 @@ def parse_json_response_to_list_of_cards(response: requests.models.Response) -> 
     return source_cards
 
 
+class List:
+    def __init__(self, list_id):
+        self.id = list_id
+
+
+class Card:
+    def __init__(self, card_id, due_date, member_ids, completed):
+        self.id = card_id
+        self.due_date = due_date
+        self.member_IDs = member_ids
+        self.completed = completed
+
+
+def parse_json_to_list(response: requests.models.Response, lists_to_exclude: list = IDS_OF_LISTS_TO_EXCLUDE):
+    lists_on_board = json.loads(response.text)
+    source_lists = []
+    lists_to_exclude.append(DEFAULT_TARGET_LIST_ID)
+    for searched_list in lists_on_board:
+        if searched_list['id'] not in lists_to_exclude:
+            source_lists.append(List(searched_list['id']))
+    return source_lists
+
+
+def parse_json_to_card(response: requests.models.Response):
+    cards_on_list = json.loads(response.text)
+    source_cards = []
+    for card in cards_on_list:
+        source_cards.append(Card(card_id=card['id'], due_date=card['badges']['due'], member_ids=card['idMembers'],
+                         completed=card['badges']['dueComplete']))
+    return source_cards
+
+
 def make_trello_request(url_add_on: str, method: str = 'GET', params: dict = None, data: dict = None):
     headers = {
         'Accept': 'application/json'
@@ -158,7 +190,7 @@ def sort_list_by_due_date(id_list: str, reverse: bool = False) -> None:
         position = position + first_position
 
 
-def copy_checked_items_from_checklists(investigated_card: Card, target_card_id: str) -> None:
+def copy_checked_items_from_checklists(investigated_card: Card, target_card_id: str):
     response_source = make_trello_request('cards/' + investigated_card.id + '/checklists')
     source_checklists_dict = json.loads(response_source.text)
     response_target = make_trello_request(f'cards/{target_card_id}/checklists')
