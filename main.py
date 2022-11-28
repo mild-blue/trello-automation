@@ -33,33 +33,6 @@ class List:
         self.id = list_id
 
 
-class Card:
-    def __init__(self, card_id, due_date, member_ids, completed):
-        self.id = card_id
-        self.due_date = due_date
-        self.member_IDs = member_ids
-        self.completed = completed
-
-
-def parse_json_to_list(response: requests.models.Response, lists_to_exclude: list = IDS_OF_LISTS_TO_EXCLUDE):
-    lists_on_board = json.loads(response.text)
-    source_lists = []
-    lists_to_exclude.append(DEFAULT_TARGET_LIST_ID)
-    for searched_list in lists_on_board:
-        if searched_list['id'] not in lists_to_exclude:
-            source_lists.append(List(searched_list['id']))
-    return source_lists
-
-
-def parse_json_to_card(response: requests.models.Response):
-    cards_on_list = json.loads(response.text)
-    source_cards = []
-    for card in cards_on_list:
-        source_cards.append(Card(card_id=card['id'], due_date=card['badges']['due'], member_ids=card['idMembers'],
-                         completed=card['badges']['dueComplete']))
-    return source_cards
-
-
 def make_trello_request(url_add_on: str, method: str = 'GET', params: dict = None, data: dict = None):
     headers = {
         'Accept': 'application/json'
