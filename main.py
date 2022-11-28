@@ -9,37 +9,24 @@ from my_settings import (BOARD_IDS, DEFAULT_TARGET_LIST_ID,
                          LIST_IDS_TO_SORT, MEMBER_NAME_ID_PAIRS,
                          MOVE_FROM_LIST_IDS,
                          NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
+from List import List
+from Card import Card
 
 
-class List:
-    def __init__(self, list_id):
-        self.id = list_id
-
-
-class Card:
-    def __init__(self, card_id, due_date, member_ids, completed):
-        self.id = card_id
-        self.due_date = due_date
-        self.member_IDs = member_ids
-        self.completed = completed
-
-
-def parse_json_to_list(response: requests.models.Response, lists_to_exclude: list = IDS_OF_LISTS_TO_EXCLUDE):
+def parse_json_response_to_list_of_lists(response: requests.models.Response) -> list:
     lists_on_board = json.loads(response.text)
     source_lists = []
-    lists_to_exclude.append(DEFAULT_TARGET_LIST_ID)
     for searched_list in lists_on_board:
-        if searched_list['id'] not in lists_to_exclude:
-            source_lists.append(List(searched_list['id']))
+        source_lists.append(List(searched_list['id']))
     return source_lists
 
 
-def parse_json_to_card(response: requests.models.Response):
+def parse_json_response_to_list_of_cards(response: requests.models.Response) -> list:
     cards_on_list = json.loads(response.text)
     source_cards = []
     for card in cards_on_list:
         source_cards.append(Card(card_id=card['id'], due_date=card['badges']['due'], member_ids=card['idMembers'],
-                         completed=card['badges']['dueComplete']))
+                                 completed=card['badges']['dueComplete']))
     return source_cards
 
 
@@ -64,24 +51,24 @@ def make_trello_request(url_add_on: str, method: str = 'GET', params: dict = Non
         response.raise_for_status()
 
 
-def search_board(searched_board_id: int,
-                 lists_to_exclude: list = IDS_OF_LISTS_TO_EXCLUDE):
+def search_board(searched_board_id: int, lists_to_exclude: list = IDS_OF_LISTS_TO_EXCLUDE) -> list:
     response = make_trello_request(f'boards/{searched_board_id}/lists')
-    source_lists = parse_json_to_list(response=response, lists_to_exclude=lists_to_exclude)
+    source_lists = parse_json_response_to_list_of_lists(response=response)
+    lists_to_exclude.append(DEFAULT_TARGET_LIST_ID)
+    source_lists = [source_list for source_list in source_lists if source_list.id not in lists_to_exclude]
     return source_lists
 
 
-def search_list(searched_list: List, latest_due_date: datetime.date):
+def search_list(searched_list: List, latest_due_date: datetime.date) -> set:
     response = make_trello_request(f'lists/{searched_list.id}/cards')
-    source_cards = parse_json_to_card(response=response)
+    source_cards = parse_json_response_to_list_of_cards(response=response)
     valid_source_cards = set()
     for card in source_cards:
-        if not card.due_date:
-            valid_source_cards.add(card)
-        else:
+        if card.due_date:
             card_date = datetime.datetime.strptime(card.due_date, '%Y-%m-%dT%H:%M:%S.%fZ').date()
             for name in MEMBER_NAME_ID_PAIRS:
-                if MEMBER_NAME_ID_PAIRS[name] in card.member_IDs and card_date <= latest_due_date and not card.completed:
+                if MEMBER_NAME_ID_PAIRS[name] in card.member_IDs and card_date <= latest_due_date and\
+                        not card.completed:
                     valid_source_cards.add(card)
     return valid_source_cards
 
@@ -214,7 +201,8 @@ def move_cards_with_close_due_date_between_lists(latest_due_date: datetime.date,
     for source_list in all_source_lists:
         all_source_cards.update(search_list(searched_list=source_list, latest_due_date=latest_due_date))
     for source_card in all_source_cards:
-        copy_card(source_card, DEFAULT_TARGET_LIST_ID)
+        if source_card.id not in card_ids_previously_copied:
+            copy_card(source_card, DEFAULT_TARGET_LIST_ID)
 
 
 def main():
