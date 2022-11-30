@@ -104,7 +104,7 @@ def get_name_id_pairs_of_my_boards():
     ids = response_members_dict['idBoards']
     id_dictionary = {}
     for identity in ids:
-        response_board = make_trello_request('boards/' + identity)
+        response_board = make_trello_request(f'boards/{identity}')
         response_board_dict = json.loads(response_board.text)
         id_dictionary[response_board_dict['name']] = identity
         print(response_board_dict['name'] + ' - ' + identity)
@@ -112,7 +112,7 @@ def get_name_id_pairs_of_my_boards():
 
 
 def get_name_id_pairs_of_board_members(investigated_board_id: str) -> dict:
-    members_json = make_trello_request('boards/' + investigated_board_id + '/members')
+    members_json = make_trello_request(f'boards/{investigated_board_id}/members')
     members = json.loads(members_json.text)
     board_members_ids = {}
     for member in members:
@@ -122,7 +122,7 @@ def get_name_id_pairs_of_board_members(investigated_board_id: str) -> dict:
 
 
 def get_board_list_name_id_pairs(investigated_board_id: str) -> dict:
-    response = make_trello_request('boards/' + investigated_board_id + '/lists')
+    response = make_trello_request(f'boards/{investigated_board_id}/lists')
     lists_on_a_board_dict = json.loads(response.text)
     print('Name ID pairs of lists on a board', investigated_board_id)
     board_list_name_id_pairs_dict = {}
@@ -133,15 +133,15 @@ def get_board_list_name_id_pairs(investigated_board_id: str) -> dict:
 
 
 def copy_checked_items_from_checklists(investigated_card_id: str, target_card_id: str):
-    response_source = make_trello_request('cards/' + investigated_card_id + '/checklists')
+    response_source = make_trello_request(f'cards/{investigated_card_id}/checklists')
     source_checklists_dict = json.loads(response_source.text)
-    response_target = make_trello_request('cards/' + target_card_id + '/checklists')
+    response_target = make_trello_request(f'cards/{target_card_id}/checklists')
     target_checklists_dict = json.loads(response_target.text)
 
     for checklist_source, checklist_target in zip(source_checklists_dict, target_checklists_dict):
         for check_item_source, check_item_target in zip(checklist_source['checkItems'], checklist_target['checkItems']):
             params = {'state': check_item_source['state']}
-            make_trello_request('cards/' + target_card_id + '/checkItem/' + check_item_target['id'],
+            make_trello_request(f'cards/{target_card_id}/checkItem/{check_item_target["id"]}',
                                 method='PUT', params=params)
 
 
