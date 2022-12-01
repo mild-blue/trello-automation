@@ -132,6 +132,26 @@ def get_board_list_name_id_pairs(investigated_board_id: str) -> dict:
     return board_list_name_id_pairs_dict
 
 
+def sort_list_by_due_date(id_list: str, reverse=False) -> None:
+    response = make_trello_request(f'lists/{id_list}/cards')
+    cards = json.loads(response.text)
+    id_due_date_dict = {}
+    first_position = cards[0]['pos']
+    for card in cards:
+        if card['due']:
+            id_due_date_dict[card['id']] = datetime.datetime.strptime(card['due'][0:10], '%Y-%m-%d')
+        else:
+            id_due_date_dict[card['id']] = None
+    sorted_dict = sorted(id_due_date_dict.items(), key=lambda d: (d[1] is None, d[1]), reverse=reverse)
+
+    position = first_position
+    positions = []
+    for item in sorted_dict:
+        response = make_trello_request(f'cards/{item[0]}', params={'pos': f'{position}'}, method='PUT')
+        positions.append(json.loads(response.text)['pos'])
+        position = position + first_position
+
+
 def copy_checked_items_from_checklists(investigated_card_id: str, target_card_id: str):
     response_source = make_trello_request(f'cards/{investigated_card_id}/checklists')
     source_checklists_dict = json.loads(response_source.text)
