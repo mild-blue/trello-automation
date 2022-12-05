@@ -158,6 +158,10 @@ def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: d
             copy_card(source_card_id, DEFAULT_TARGET_LIST_ID)
 
 
+def move_card(card_to_move_id: str, target_list_id: str):
+    make_trello_request(f'cards/{card_to_move_id}', method='PUT', data={'idList': target_list_id})
+
+
 def main():
     latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
     copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date)
