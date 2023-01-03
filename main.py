@@ -142,13 +142,11 @@ def sort_list_by_due_date(id_list: str, reverse=False) -> None:
             id_due_date_dict[card['id']] = datetime.datetime.strptime(card['due'][0:10], '%Y-%m-%d')
         else:
             id_due_date_dict[card['id']] = None
-    sorted_dict = sorted(id_due_date_dict.items(), key=lambda d: (d[1] is None, d[1]), reverse=reverse)
+    id_due_date_sorted_dict = sorted(id_due_date_dict.items(), key=lambda d: (d[1] is None, d[1]), reverse=reverse)
 
     position = first_position
-    positions = []
-    for item in sorted_dict:
-        response = make_trello_request(f'cards/{item[0]}', params={'pos': f'{position}'}, method='PUT')
-        positions.append(json.loads(response.text)['pos'])
+    for id_due_date in id_due_date_sorted_dict:
+        response = make_trello_request(f'cards/{id_due_date[0]}', params={'pos': f'{position}'}, method='PUT')
         position = position + first_position
 
 
