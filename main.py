@@ -42,7 +42,7 @@ def search_board(searched_board_id: int,
     return source_list_ids
 
 
-def search_list(searched_list_id: int, latest_due_date: datetime.date):
+def search_list(searched_list_id: str, latest_due_date: datetime.date):
     response = make_trello_request(f'lists/{searched_list_id}/cards')
     cards_on_list = json.loads(response.text)
     source_card_ids = set()
@@ -92,8 +92,8 @@ def get_source_card_id(card_id: str) -> str:
 def get_list_of_card_ids_previously_copied() -> list:
     target_list_card_ids = get_target_list_card_ids()
     copied_cards_ids = []
-    for id in target_list_card_ids:
-        copied_cards_ids.append(get_source_card_id(id))
+    for card_id in target_list_card_ids:
+        copied_cards_ids.append(get_source_card_id(card_id))
     return copied_cards_ids
 
 
@@ -163,7 +163,8 @@ def copy_checked_items_from_checklists(investigated_card_id: str, target_card_id
                                 method='PUT', params=params)
 
 
-def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: datetime.date):
+def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: datetime.date,
+                                                              target_list_id: str = DEFAULT_TARGET_LIST_ID):
     card_ids_previously_copied = get_list_of_card_ids_previously_copied()
     all_source_list_ids = []
     for board_id in BOARD_IDS:
@@ -173,7 +174,7 @@ def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: d
         all_source_card_ids.update(search_list(searched_list_id=source_list_id, latest_due_date=latest_due_date))
     for source_card_id in all_source_card_ids:
         if source_card_id not in card_ids_previously_copied:
-            copy_card(source_card_id, DEFAULT_TARGET_LIST_ID)
+            copy_card(source_card_id, target_list_id)
 
 
 def move_card(card_to_move_id: str, target_list_id: str):
