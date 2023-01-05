@@ -1,12 +1,14 @@
+#!/usr/bin/env python3
 import datetime
 import json
 
 import requests
 
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
-from my_settings import (BOARD_IDS, DEFAULT_TARGET_LIST_ID,
-                         IDS_OF_LISTS_TO_EXCLUDE, MEMBER_NAME_ID_PAIRS,
-                         NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH, LIST_IDS_TO_SORT, DEFAULT_SOURCE_LIST_ID)
+from my_settings import (BOARD_IDS, DEFAULT_SOURCE_LIST_ID,
+                         DEFAULT_TARGET_LIST_ID, IDS_OF_LISTS_TO_EXCLUDE,
+                         LIST_IDS_TO_SORT, MEMBER_NAME_ID_PAIRS,
+                         NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
 
 
 def make_trello_request(url_add_on: str, method: str = 'GET', params: dict = None, data: dict = None):
@@ -191,16 +193,16 @@ def move_cards_with_close_due_date_between_lists(latest_due_date: datetime.date,
 
 
 def main():
-    for list_id in LIST_IDS_TO_SORT:
-        sort_list_by_due_date(list_id)
-    # move_card('5d488062e31b641c642b8dc3', '61cc6aad336c865ed831bb54')
-    print('Sorting complete. Starting to move cards.')
     latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
+    print('Starting to move cards.')
     move_cards_with_close_due_date_between_lists(latest_due_date=latest_due_date,
                                                  source_list_id=DEFAULT_SOURCE_LIST_ID,
                                                  target_list_id=DEFAULT_TARGET_LIST_ID)
     print('Moving cards complete. Starting to copy cards.')
     copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date)
+    print('Copying cards complete. Starting to sort lists.')
+    for list_id in LIST_IDS_TO_SORT:
+        sort_list_by_due_date(list_id)
 
 
 if __name__ == '__main__':
