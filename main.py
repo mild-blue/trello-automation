@@ -181,12 +181,24 @@ def move_card(card_to_move_id: str, target_list_id: str):
     make_trello_request(f'cards/{card_to_move_id}', method='PUT', data={'idList': target_list_id})
 
 
+def move_cards_with_close_due_date_between_lists(latest_due_date: datetime.date,
+                                                 source_list_id: str = DEFAULT_SOURCE_LIST_ID,
+                                                 target_list_id: str = DEFAULT_TARGET_LIST_ID):
+    all_source_card_ids = search_list(searched_list_id=source_list_id, latest_due_date=latest_due_date)
+    for source_card_id in all_source_card_ids:
+        move_card(source_card_id, target_list_id)
+
+
 def main():
     for list_id in LIST_IDS_TO_SORT:
         sort_list_by_due_date(list_id)
     # move_card('5d488062e31b641c642b8dc3', '61cc6aad336c865ed831bb54')
     print('Sorting complete. Starting to move cards.')
     latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
+    move_cards_with_close_due_date_between_lists(latest_due_date=latest_due_date,
+                                                 source_list_id=DEFAULT_SOURCE_LIST_ID,
+                                                 target_list_id=DEFAULT_TARGET_LIST_ID)
+    print('Moving cards complete. Starting to copy cards.')
     copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date)
 
 
