@@ -12,7 +12,7 @@ from my_settings import (BOARD_IDS, DEFAULT_SOURCE_LIST_ID,
 
 def make_trello_request(url_add_on: str, method: str = 'GET', params: dict = None, data: dict = None):
     headers = {
-        "Accept": 'application/json'
+        'Accept': 'application/json'
     }
     full_url = f'https://api.trello.com/1/{url_add_on}'
     full_data = {'key': TRELLO_KEY, 'token': TRELLO_TOKEN}
