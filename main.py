@@ -42,13 +42,13 @@ def search_board(searched_board_id: int,
     return source_list_ids
 
 
-def search_list(searched_list_id: str, latest_due_date: datetime.date):
+def search_list(searched_list_id: str, latest_due_date: datetime.date, do_not_require_members_on_card: bool = False):
     response = make_trello_request(f'lists/{searched_list_id}/cards')
     cards_on_list = json.loads(response.text)
     source_card_ids = set()
     for card in cards_on_list:
         for name in MEMBER_NAME_ID_PAIRS:
-            if (MEMBER_NAME_ID_PAIRS[name] in card['idMembers']) and \
+            if (MEMBER_NAME_ID_PAIRS[name] in card['idMembers'] or do_not_require_members_on_card) and \
                     (check_due_date(card['id'], latest_due_date)) and \
                     (card['badges']['dueComplete'] is False):
                 source_card_ids.add(card['id'])
@@ -184,7 +184,8 @@ def move_card(card_to_move_id: str, target_list_id: str):
 def move_cards_with_close_due_date_between_lists(latest_due_date: datetime.date,
                                                  source_list_id: str = DEFAULT_SOURCE_LIST_ID,
                                                  target_list_id: str = DEFAULT_TARGET_LIST_ID):
-    all_source_card_ids = search_list(searched_list_id=source_list_id, latest_due_date=latest_due_date)
+    all_source_card_ids = search_list(searched_list_id=source_list_id, latest_due_date=latest_due_date,
+                                      do_not_require_members_on_card=True)
     for source_card_id in all_source_card_ids:
         move_card(source_card_id, target_list_id)
 
