@@ -140,7 +140,7 @@ def sort_list_by_due_date(id_list: str, reverse=False) -> None:
     first_position = cards[0]['pos']
     for card in cards:
         if card['due']:
-            id_due_date_dict[card['id']] = datetime.datetime.strptime(card['due'][0:10], '%Y-%m-%d')
+            id_due_date_dict[card['id']] = datetime.datetime.strptime(card['due'][0:19], '%Y-%m-%dT%H:%M:%S')
         else:
             id_due_date_dict[card['id']] = None
     id_due_date_sorted_dict = sorted(id_due_date_dict.items(), key=lambda d: (d[1] is None, d[1]), reverse=reverse)
