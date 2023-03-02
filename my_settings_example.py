@@ -5,4 +5,4 @@ DEFAULT_TARGET_LIST_ID = 'dummyTargetListID'
 MEMBER_NAME_ID_PAIRS = {'Name1': 'IDName1', 'Name2': 'IDName2'}
 NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH = 5
 LIST_IDS_TO_SORT = ['dummyListID1', 'dummyListID2']
-DEFAULT_SOURCE_LIST_ID = 'dummyTargetListID'
+MOVE_FROM_LIST_IDS = ['dummyTargetListID']
