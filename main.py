@@ -5,8 +5,9 @@ import requests
 
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
 from my_settings import (BOARD_IDS, DEFAULT_TARGET_LIST_ID,
-                         IDS_OF_LISTS_TO_EXCLUDE, LIST_IDS_TO_SORT,
-                         MEMBER_NAME_ID_PAIRS, MOVE_FROM_LIST_IDS,
+                         IDS_OF_LISTS_TO_EXCLUDE, LIST_IDS_TO_IGNORE,
+                         LIST_IDS_TO_SORT, MEMBER_NAME_ID_PAIRS,
+                         MOVE_FROM_LIST_IDS,
                          NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
 
 
@@ -72,8 +73,8 @@ def check_due_date(card_id: str, latest_due_date: datetime.date) -> bool:
         return False
 
 
-def get_target_list_card_ids() -> list:
-    response = make_trello_request(f'lists/{DEFAULT_TARGET_LIST_ID}/cards')
+def get_list_cards_ids(list_id: str) -> list:
+    response = make_trello_request(f'lists/{list_id}/cards')
     response_dict = json.loads(response.text)
     card_id_list = []
     for card in response_dict:
@@ -91,7 +92,9 @@ def get_source_card_id(card_id: str) -> str:
 
 
 def get_list_of_card_ids_previously_copied() -> list:
-    target_list_card_ids = get_target_list_card_ids()
+    target_list_card_ids = []
+    for list_id in LIST_IDS_TO_IGNORE:
+        target_list_card_ids.extend(get_list_cards_ids(list_id))
     copied_cards_ids = []
     for card_id in target_list_card_ids:
         copied_cards_ids.append(get_source_card_id(card_id))
