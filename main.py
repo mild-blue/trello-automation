@@ -5,7 +5,8 @@ import requests
 
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
 from my_settings import (BOARD_IDS, DEFAULT_TARGET_LIST_ID,
-                         IDS_OF_LISTS_TO_EXCLUDE, MEMBER_NAME_ID_PAIRS,
+                         IDS_OF_LISTS_TO_EXCLUDE, LIST_IDS_TO_SORT,
+                         MEMBER_NAME_ID_PAIRS, MOVE_FROM_LIST_IDS,
                          NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
 
 
@@ -42,13 +43,13 @@ def search_board(searched_board_id: int,
     return source_list_ids
 
 
-def search_list(searched_list_id: int, latest_due_date: datetime.date):
+def search_list(searched_list_id: str, latest_due_date: datetime.date, do_not_require_members_on_card: bool = False):
     response = make_trello_request(f'lists/{searched_list_id}/cards')
     cards_on_list = json.loads(response.text)
     source_card_ids = set()
     for card in cards_on_list:
         for name in MEMBER_NAME_ID_PAIRS:
-            if (MEMBER_NAME_ID_PAIRS[name] in card['idMembers']) and \
+            if (MEMBER_NAME_ID_PAIRS[name] in card['idMembers'] or do_not_require_members_on_card) and \
                     (check_due_date(card['id'], latest_due_date)) and \
                     (card['badges']['dueComplete'] is False):
                 source_card_ids.add(card['id'])
@@ -92,8 +93,8 @@ def get_source_card_id(card_id: str) -> str:
 def get_list_of_card_ids_previously_copied() -> list:
     target_list_card_ids = get_target_list_card_ids()
     copied_cards_ids = []
-    for id in target_list_card_ids:
-        copied_cards_ids.append(get_source_card_id(id))
+    for card_id in target_list_card_ids:
+        copied_cards_ids.append(get_source_card_id(card_id))
     return copied_cards_ids
 
 
@@ -163,7 +164,8 @@ def copy_checked_items_from_checklists(investigated_card_id: str, target_card_id
                                 method='PUT', params=params)
 
 
-def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: datetime.date):
+def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: datetime.date,
+                                                              target_list_id: str = DEFAULT_TARGET_LIST_ID):
     card_ids_previously_copied = get_list_of_card_ids_previously_copied()
     all_source_list_ids = []
     for board_id in BOARD_IDS:
@@ -173,16 +175,33 @@ def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: d
         all_source_card_ids.update(search_list(searched_list_id=source_list_id, latest_due_date=latest_due_date))
     for source_card_id in all_source_card_ids:
         if source_card_id not in card_ids_previously_copied:
-            copy_card(source_card_id, DEFAULT_TARGET_LIST_ID)
+            copy_card(source_card_id, target_list_id)
 
 
 def move_card(card_to_move_id: str, target_list_id: str):
     make_trello_request(f'cards/{card_to_move_id}', method='PUT', data={'idList': target_list_id})
 
 
+def move_cards_with_close_due_date_between_lists(latest_due_date: datetime.date,
+                                                 source_list_id: str, target_list_id: str):
+    all_source_card_ids = search_list(searched_list_id=source_list_id, latest_due_date=latest_due_date,
+                                      do_not_require_members_on_card=True)
+    for source_card_id in all_source_card_ids:
+        move_card(source_card_id, target_list_id)
+
+
 def main():
     latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
-    copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date)
+    print('Starting to move cards.')
+    for move_from_list_id in MOVE_FROM_LIST_IDS:
+        move_cards_with_close_due_date_between_lists(latest_due_date=latest_due_date,
+                                                     source_list_id=move_from_list_id,
+                                                     target_list_id=DEFAULT_TARGET_LIST_ID)
+    print('Moving cards complete. Starting to copy cards.')
+    copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date=latest_due_date)
+    print('Copying cards complete. Starting to sort lists.')
+    for sort_list_id in LIST_IDS_TO_SORT:
+        sort_list_by_due_date(sort_list_id)
 
 
 if __name__ == '__main__':
