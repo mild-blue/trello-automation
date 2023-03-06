@@ -28,11 +28,6 @@ def parse_json_response_to_list_of_cards(response: requests.models.Response) -> 
     return source_cards
 
 
-class List:
-    def __init__(self, list_id):
-        self.id = list_id
-
-
 def make_trello_request(url_add_on: str, method: str = 'GET', params: dict = None, data: dict = None):
     headers = {
         'Accept': 'application/json'
@@ -82,8 +77,8 @@ def copy_card(card: Card, target_list_id: str) -> None:
     copy_checked_items_from_checklists(card, json.loads(response.text)['id'])
 
 
-def get_target_list_card_ids() -> list:
-    response = make_trello_request(f'lists/{DEFAULT_TARGET_LIST_ID}/cards')
+def get_list_cards_ids(list_id: str) -> list:
+    response = make_trello_request(f'lists/{list_id}/cards')
     response_dict = json.loads(response.text)
     card_id_list = []
     for card in response_dict:
@@ -101,10 +96,12 @@ def get_source_card_id(card_id: str) -> str:
 
 
 def get_list_of_card_ids_previously_copied() -> list:
-    target_list_card_ids = get_target_list_card_ids()
+    target_list_card_ids = []
+    for list_id in LIST_IDS_TO_IGNORE:
+        target_list_card_ids.extend(get_list_cards_ids(list_id))
     copied_cards_ids = []
-    for id in target_list_card_ids:
-        copied_cards_ids.append(get_source_card_id(id))
+    for card_id in target_list_card_ids:
+        copied_cards_ids.append(get_source_card_id(card_id))
     return copied_cards_ids
 
 
