@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
@@ -233,7 +233,18 @@ def main():
 
 
 if __name__ == '__main__':
-    print(get_name_id_pairs_of_my_boards())
+    # get_name_id_pairs_of_my_boards()
+    '''
+        Project Management - 641162edda95834d33e2c246
+        Agile Sprint Board - 641c01df730972953c2d3104
+
+        Name ID pairs of lists on a board 641c01df730972953c2d3104
+        Backlog - 641c01df730972953c2d310b
+        Sprint Backlog - 641c01df730972953c2d310c
+        In Progress - 641c01df730972953c2d310d
+        8.9.17 Sprint - Complete - 641c01df730972953c2d310e
+        8.2.17 Sprint - Complete - 641c01df730972953c2d310f
+    '''
     # get_name_id_pairs_of_board_members(BOARD_IDS[0])
     # get_board_list_name_id_pairs(BOARD_IDS[0])
-    # main()
+    main()
