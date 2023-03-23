@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 
 import requests
 
@@ -11,6 +12,14 @@ from my_settings import (BOARD_IDS, DEFAULT_TARGET_LIST_ID,
                          LIST_IDS_TO_SORT, MEMBER_NAME_ID_PAIRS,
                          MOVE_FROM_LIST_IDS,
                          NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 
 def parse_json_response_to_list_of_lists(response: requests.models.Response) -> list[List]:
@@ -34,7 +43,7 @@ def make_trello_request(url_add_on: str, method: str = 'GET', params: dict = Non
     headers = {
         'Accept': 'application/json'
     }
-    full_url = f'https://api.trello.com/1/{url_add_on}'
+    full_url = f'https://trello.com/1/{url_add_on}'
     full_data = {'key': TRELLO_KEY, 'token': TRELLO_TOKEN}
     if data:
         full_data.update(data)
@@ -143,6 +152,7 @@ def get_board_list_name_id_pairs(investigated_board_id: str) -> dict:
 
 
 def sort_list_by_due_date(id_list: str, reverse: bool = False) -> None:
+    logger.info(f'Sorting list {id_list} by due date...')
     response = make_trello_request(f'lists/{id_list}/cards')
     cards = json.loads(response.text)
     id_due_date_dict = {}
@@ -175,6 +185,7 @@ def copy_checked_items_from_checklists(investigated_card: Card, target_card_id: 
 
 def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: datetime.date,
                                                               target_list_id: str = DEFAULT_TARGET_LIST_ID) -> None:
+    logger.info('Copying cards with tagged members and close due date to list...')
     card_ids_previously_copied = get_list_of_card_ids_previously_copied()
     all_source_lists = []
     for board_id in BOARD_IDS:
@@ -186,6 +197,8 @@ def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: d
         if source_card.id not in card_ids_previously_copied:
             copy_card(source_card, target_list_id)
 
+    logger.info('Done')
+
 
 def move_card(card_to_move: Card, target_list_id: str) -> None:
     make_trello_request(f'cards/{card_to_move.id}', method='PUT', data={'idList': target_list_id})
@@ -193,29 +206,34 @@ def move_card(card_to_move: Card, target_list_id: str) -> None:
 
 def move_cards_with_close_due_date_between_lists(latest_due_date: datetime.date, source_list_id: str,
                                                  target_list_id: str) -> None:
+    logger.info(f'Moving cards from list {source_list_id} to list {target_list_id}...')
+
     all_source_cards = set()
     all_source_cards.update(search_list(searched_list=List(source_list_id), latest_due_date=latest_due_date,
                                         do_not_require_members_on_card=True))
     for source_card in all_source_cards:
         move_card(source_card, target_list_id)
 
+    logger.info('Done')
+
 
 def main():
     latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
-    print('Starting to move cards.')
+    logger.info('Starting to move cards with close due date...')
     for move_from_list_id in MOVE_FROM_LIST_IDS:
         move_cards_with_close_due_date_between_lists(latest_due_date=latest_due_date,
                                                      source_list_id=move_from_list_id,
                                                      target_list_id=DEFAULT_TARGET_LIST_ID)
-    print('Moving cards complete. Starting to copy cards.')
+    logger.info('Moving cards complete. Starting to copy cards...')
     copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date=latest_due_date)
-    print('Copying cards complete. Starting to sort lists.')
+    logger.info('Copying cards complete. Starting to sort lists...')
     for sort_list_id in LIST_IDS_TO_SORT:
         sort_list_by_due_date(sort_list_id)
+    logger.info('Sorting lists complete. Finished!')
 
 
 if __name__ == '__main__':
-    # get_name_id_pairs_of_my_boards()
+    print(get_name_id_pairs_of_my_boards())
     # get_name_id_pairs_of_board_members(BOARD_IDS[0])
     # get_board_list_name_id_pairs(BOARD_IDS[0])
-    main()
+    # main()
