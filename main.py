@@ -73,10 +73,28 @@ def search_list(searched_list: List, latest_due_date: datetime.date,
                     valid_source_cards.add(card)
     return valid_source_cards
 
+def copy_card(card_id: str, target_list_id: str, copy_labels: bool = False):
+    if not copy_labels:
+        card = make_trello_request(f'cards/{card_id}')
+        card_json = json.loads(card.text)
+        if 'idLabels' in card_json:
+            card_json.pop('idLabels')
+        response = make_trello_request('cards', method='POST', data={'idList': target_list_id, 'keepFromSource': 'all', 'name': card_json['name'], 'due': card_json.get('due'), 'idMembers': card_json.get('idMembers')})
+        copy_checked_items_from_checklists(card_id, json.loads(response.text)['id'])
+    else:
+        response = make_trello_request('cards', method='POST', data={'idList': target_list_id, 'idCardSource': card_id})
+        copy_checked_items_from_checklists(card_id, json.loads(response.text)['id'])
 
-def copy_card(card: Card, target_list_id: str) -> None:
-    response = make_trello_request('cards', method='POST', data={'idList': target_list_id, 'idCardSource': card.id})
-    copy_checked_items_from_checklists(card, json.loads(response.text)['id'])
+
+def check_due_date(card_id: str, latest_due_date: datetime.date) -> bool:
+    response = make_trello_request(f'cards/{card_id}/due')
+    date_on_card_dict = json.loads(response.text)
+    date_on_card = date_on_card_dict['_value']
+    if date_on_card:
+        card_date = datetime.datetime.strptime(date_on_card, '%Y-%m-%dT%H:%M:%S.%fZ').date()
+        return card_date <= latest_due_date
+    else:
+        return False
 
 
 def get_list_cards_ids(list_id: str) -> list:
@@ -174,7 +192,8 @@ def copy_checked_items_from_checklists(investigated_card: Card, target_card_id: 
 
 
 def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: datetime.date,
-                                                              target_list_id: str = DEFAULT_TARGET_LIST_ID) -> None:
+                                                              target_list_id: str = DEFAULT_TARGET_LIST_ID,
+                                                              copy_labels: bool = True) -> None:
     card_ids_previously_copied = get_list_of_card_ids_previously_copied()
     all_source_lists = []
     for board_id in BOARD_IDS:
@@ -184,7 +203,7 @@ def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: d
         all_source_cards.update(search_list(searched_list=source_list, latest_due_date=latest_due_date))
     for source_card in all_source_cards:
         if source_card.id not in card_ids_previously_copied:
-            copy_card(source_card, target_list_id)
+            copy_card(source_card, target_list_id, copy_labels)
 
 
 def move_card(card_to_move: Card, target_list_id: str) -> None:
@@ -208,7 +227,7 @@ def main():
                                                      source_list_id=move_from_list_id,
                                                      target_list_id=DEFAULT_TARGET_LIST_ID)
     print('Moving cards complete. Starting to copy cards.')
-    copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date=latest_due_date)
+    copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date=latest_due_date, copy_labels=False)
     print('Copying cards complete. Starting to sort lists.')
     for sort_list_id in LIST_IDS_TO_SORT:
         sort_list_by_due_date(sort_list_id)
