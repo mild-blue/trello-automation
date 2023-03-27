@@ -159,7 +159,7 @@ def sort_list_by_due_date(id_list: str, reverse: bool = False) -> None:
 
 
 def copy_checked_items_from_checklists(investigated_card: Card, target_card_id: str):
-    response_source = make_trello_request('cards/' + investigated_card.id + '/checklists')
+    response_source = make_trello_request(f'cards/{investigated_card.id}/checklists')
     source_checklists_dict = json.loads(response_source.text)
     response_target = make_trello_request(f'cards/{target_card_id}/checklists')
     target_checklists_dict = json.loads(response_target.text)
@@ -189,12 +189,11 @@ def move_card(card_to_move: Card, target_list_id: str) -> None:
     make_trello_request(f'cards/{card_to_move.id}', method='PUT', data={'idList': target_list_id})
 
 
-def move_cards_with_close_due_date_between_lists(latest_due_date: datetime.date,
+def move_cards_with_close_due_date_between_lists(latest_due_date: datetime.date, source_list_id: str,
                                                  target_list_id: str = DEFAULT_TARGET_LIST_ID) -> None:
     all_source_cards = set()
-    for move_from_list_id in MOVE_FROM_LIST_IDS:
-        all_source_cards.update(search_list(searched_list=List(move_from_list_id), latest_due_date=latest_due_date,
-                                            do_not_require_members_on_card=True))
+    all_source_cards.update(search_list(searched_list=List(source_list_id), latest_due_date=latest_due_date,
+                                        do_not_require_members_on_card=True))
     for source_card in all_source_cards:
         move_card(source_card, target_list_id)
 
@@ -202,7 +201,8 @@ def move_cards_with_close_due_date_between_lists(latest_due_date: datetime.date,
 def main():
     latest_due_date = datetime.date.today() + datetime.timedelta(days=NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
     print('Starting to move cards.')
-    move_cards_with_close_due_date_between_lists(latest_due_date=latest_due_date)
+    for move_from_list_id in MOVE_FROM_LIST_IDS:
+        move_cards_with_close_due_date_between_lists(latest_due_date=latest_due_date, source_list_id=move_from_list_id)
     print('Moving cards complete. Starting to copy cards.')
     copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date=latest_due_date)
     print('Copying cards complete. Starting to sort lists.')
