@@ -231,7 +231,7 @@ def main():
         move_cards_with_close_due_date_between_lists(latest_due_date=latest_due_date,
                                                      source_list_id=move_from_list_id,
                                                      target_list_id=DEFAULT_TARGET_LIST_ID,
-                                                     save_labels=False)
+                                                     save_labels=True)
     print('Moving cards complete. Starting to copy cards.')
     copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date=latest_due_date, copy_labels=False)
     print('Copying cards complete. Starting to sort lists.')
