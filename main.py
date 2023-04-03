@@ -189,12 +189,15 @@ def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: d
     card_ids_previously_copied = get_list_of_card_ids_previously_copied()
     all_source_lists = []
     for board_id in BOARD_IDS:
+        logging.info("Getting list ids from board with id " + board_id + "...")
         all_source_lists = all_source_lists + search_board(board_id)
     all_source_cards = set()
     for source_list in all_source_lists:
+        logging.info("Getting card ids from list with id " + source_list + " and latest due date "+ latest_due_date + "...")
         all_source_cards.update(search_list(searched_list=source_list, latest_due_date=latest_due_date))
     for source_card in all_source_cards:
         if source_card.id not in card_ids_previously_copied:
+            logging.info(f'Copying card {source_card.id} to list {target_list_id}...')
             copy_card(source_card, target_list_id)
 
     logger.info('Done')
