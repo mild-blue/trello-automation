@@ -207,17 +207,21 @@ def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: d
             copy_card(source_card, target_list_id, copy_labels)
 
 
-def move_card(card_to_move: Card, target_list_id: str) -> None:
-    make_trello_request(f'cards/{card_to_move.id}', method='PUT', data={'idList': target_list_id})
+def move_card(card_to_move: Card, target_list_id: str, save_labels: bool = True) -> None:
+    data = data={'idList': target_list_id}
+    if not save_labels:
+        data={'idList': target_list_id, 'idLabels': ''}
+    
+    make_trello_request(f'cards/{card_to_move.id}', method='PUT', data=data)
 
 
 def move_cards_with_close_due_date_between_lists(latest_due_date: datetime.date, source_list_id: str,
-                                                 target_list_id: str) -> None:
+                                                 target_list_id: str, save_labels: bool = True) -> None:
     all_source_cards = set()
     all_source_cards.update(search_list(searched_list=List(source_list_id), latest_due_date=latest_due_date,
                                         do_not_require_members_on_card=True))
     for source_card in all_source_cards:
-        move_card(source_card, target_list_id)
+        move_card(source_card, target_list_id, save_labels)
 
 
 def main():
@@ -226,7 +230,8 @@ def main():
     for move_from_list_id in MOVE_FROM_LIST_IDS:
         move_cards_with_close_due_date_between_lists(latest_due_date=latest_due_date,
                                                      source_list_id=move_from_list_id,
-                                                     target_list_id=DEFAULT_TARGET_LIST_ID)
+                                                     target_list_id=DEFAULT_TARGET_LIST_ID,
+                                                     save_labels=False)
     print('Moving cards complete. Starting to copy cards.')
     copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date=latest_due_date, copy_labels=False)
     print('Copying cards complete. Starting to sort lists.')
