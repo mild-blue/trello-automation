@@ -1,8 +1,30 @@
 import datetime
 import json
 
+from List import List
+from Card import Card
+
+import requests
+
 from my_settings import (LIST_IDS_TO_IGNORE,MEMBER_NAME_ID_PAIRS)
 from helpers.trello_api import make_trello_request
+
+
+def parse_json_response_to_list_of_lists(response: requests.models.Response) -> list[List]:
+    lists_on_board = json.loads(response.text)
+    source_lists = []
+    for searched_list in lists_on_board:
+        source_lists.append(List(searched_list['id']))
+    return source_lists
+
+
+def parse_json_response_to_list_of_cards(response: requests.models.Response) -> list[Card]:
+    cards_on_list = json.loads(response.text)
+    source_cards = []
+    for card in cards_on_list:
+        source_cards.append(Card(card_id=card['id'], due_date=card['badges']['due'], member_ids=card['idMembers'],
+                                 completed=card['badges']['dueComplete']))
+    return source_cards
 
 
 def check_due_date(card_id: str, latest_due_date: datetime.date) -> bool:
@@ -15,17 +37,19 @@ def check_due_date(card_id: str, latest_due_date: datetime.date) -> bool:
     else:
         return False
 
-def search_list(searched_list_id: str, latest_due_date: datetime.date, do_not_require_members_on_card: bool = False):
-    response = make_trello_request(f'lists/{searched_list_id}/cards')
-    cards_on_list = json.loads(response.text)
-    source_card_ids = set()
-    for card in cards_on_list:
-        for name in MEMBER_NAME_ID_PAIRS:
-            if (MEMBER_NAME_ID_PAIRS[name] in card['idMembers'] or do_not_require_members_on_card) and \
-                    (check_due_date(card['id'], latest_due_date)) and \
-                    (card['badges']['dueComplete'] is False):
-                source_card_ids.add(card['id'])
-    return source_card_ids
+def search_list(searched_list: List, latest_due_date: datetime.date,
+                do_not_require_members_on_card: bool = False) -> set[Card]:
+    response = make_trello_request(f'lists/{searched_list.id}/cards')
+    source_cards = parse_json_response_to_list_of_cards(response=response)
+    valid_source_cards = set()
+    for card in source_cards:
+        if card.due_date:
+            card_date = datetime.datetime.strptime(card.due_date, '%Y-%m-%dT%H:%M:%S.%fZ').date()
+            for name in MEMBER_NAME_ID_PAIRS:
+                if (MEMBER_NAME_ID_PAIRS[name] in card.member_IDs or do_not_require_members_on_card) \
+                        and card_date <= latest_due_date and not card.completed:
+                    valid_source_cards.add(card)
+    return valid_source_cards
 
 
 def get_list_cards_ids(list_id: str) -> list:
