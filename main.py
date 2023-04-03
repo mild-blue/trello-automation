@@ -73,17 +73,21 @@ def search_list(searched_list: List, latest_due_date: datetime.date,
                     valid_source_cards.add(card)
     return valid_source_cards
 
+
 def copy_card(card_id: str, target_list_id: str, copy_labels: bool = False):
     if not copy_labels:
         card = make_trello_request(f'cards/{card_id}')
         card_json = json.loads(card.text)
         if 'idLabels' in card_json:
             card_json.pop('idLabels')
-        response = make_trello_request('cards', method='POST', data={'idList': target_list_id, 'keepFromSource': 'all', 'name': card_json['name'], 'due': card_json.get('due'), 'idMembers': card_json.get('idMembers')})
-        copy_checked_items_from_checklists(card_id, json.loads(response.text)['id'])
+        response = make_trello_request('cards', method='POST', data={'idList': target_list_id, 'keepFromSource': 'all',
+                                                                     'name': card_json['name'],
+                                                                     'due': card_json.get('due'),
+                                                                     'idMembers': card_json.get('idMembers')})
     else:
         response = make_trello_request('cards', method='POST', data={'idList': target_list_id, 'idCardSource': card_id})
-        copy_checked_items_from_checklists(card_id, json.loads(response.text)['id'])
+
+    copy_checked_items_from_checklists(card_id, json.loads(response.text)['id'])
 
 
 def check_due_date(card_id: str, latest_due_date: datetime.date) -> bool:
