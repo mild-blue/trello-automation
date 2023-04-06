@@ -4,13 +4,13 @@ import json
 import requests
 
 from Card import Card
-from TrelloList import TrelloList
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
 from my_settings import (BOARD_IDS, DEFAULT_TARGET_LIST_ID,
                          IDS_OF_LISTS_TO_EXCLUDE, LIST_IDS_TO_IGNORE,
                          LIST_IDS_TO_SORT, MEMBER_NAME_ID_PAIRS,
                          MOVE_FROM_LIST_IDS,
                          NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
+from TrelloList import TrelloList
 
 
 def parse_json_response_to_list_of_lists(response: requests.models.Response) -> list[TrelloList]:
