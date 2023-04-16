@@ -5,13 +5,13 @@ import logging
 import requests
 
 from Card import Card
-from List import List
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
 from my_settings import (BOARD_IDS, DEFAULT_TARGET_LIST_ID,
                          IDS_OF_LISTS_TO_EXCLUDE, LIST_IDS_TO_IGNORE,
                          LIST_IDS_TO_SORT, MEMBER_NAME_ID_PAIRS,
                          MOVE_FROM_LIST_IDS,
                          NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
+from TrelloList import TrelloList
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -23,11 +23,11 @@ logger.propagate = False
 logger.addHandler(console_handler)
 
 
-def parse_json_response_to_list_of_lists(response: requests.models.Response) -> list[List]:
+def parse_json_response_to_list_of_lists(response: requests.models.Response) -> list[TrelloList]:
     lists_on_board = json.loads(response.text)
     source_lists = []
     for searched_list in lists_on_board:
-        source_lists.append(List(searched_list['id']))
+        source_lists.append(TrelloList(searched_list['id']))
     return source_lists
 
 
@@ -61,7 +61,7 @@ def make_trello_request(url_add_on: str, method: str = 'GET', params: dict = Non
         response.raise_for_status()
 
 
-def search_board(searched_board_id: int, lists_to_exclude: list[str] = IDS_OF_LISTS_TO_EXCLUDE) -> list[List]:
+def search_board(searched_board_id: int, lists_to_exclude: list[str] = IDS_OF_LISTS_TO_EXCLUDE) -> list[TrelloList]:
     response = make_trello_request(f'boards/{searched_board_id}/lists')
     source_lists = parse_json_response_to_list_of_lists(response=response)
     lists_to_exclude.append(DEFAULT_TARGET_LIST_ID)
@@ -69,7 +69,7 @@ def search_board(searched_board_id: int, lists_to_exclude: list[str] = IDS_OF_LI
     return source_lists
 
 
-def search_list(searched_list: List, latest_due_date: datetime.date,
+def search_list(searched_list: TrelloList, latest_due_date: datetime.date,
                 do_not_require_members_on_card: bool = False) -> set[Card]:
     response = make_trello_request(f'lists/{searched_list.id}/cards')
     source_cards = parse_json_response_to_list_of_cards(response=response)
@@ -156,6 +156,8 @@ def sort_list_by_due_date(id_list: str, reverse: bool = False) -> None:
     logger.info(f'Sorting list {id_list} by due date...')
     response = make_trello_request(f'lists/{id_list}/cards')
     cards = json.loads(response.text)
+    if not cards:
+        return
     id_due_date_dict = {}
     first_position = cards[0]['pos']
     for card in cards:
@@ -213,7 +215,7 @@ def move_cards_with_close_due_date_between_lists(latest_due_date: datetime.date,
     logger.info(f'Moving cards from list {source_list_id} to list {target_list_id}...')
 
     all_source_cards = set()
-    all_source_cards.update(search_list(searched_list=List(source_list_id), latest_due_date=latest_due_date,
+    all_source_cards.update(search_list(searched_list=TrelloList(source_list_id), latest_due_date=latest_due_date,
                                         do_not_require_members_on_card=True))
     for source_card in all_source_cards:
         move_card(source_card, target_list_id)
