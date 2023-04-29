@@ -1,15 +1,15 @@
 import datetime
 import json
 from Card import Card
-from List import List
+from TrelloList import TrelloList
 
-from helpers.helpers import get_list_of_card_ids_previously_copied, parse_json_response_to_list_of_lists, search_list
+from helper_functions.helpers import get_list_of_card_ids_previously_copied, parse_json_response_to_list_of_lists, search_list
 from my_settings import (BOARD_IDS, DEFAULT_TARGET_LIST_ID,
                          IDS_OF_LISTS_TO_EXCLUDE)
-from helpers.trello_api import make_trello_request
+from helper_functions.trello_api import make_trello_request
 
 
-def search_board(searched_board_id: int, lists_to_exclude: list[str] = IDS_OF_LISTS_TO_EXCLUDE) -> list[List]:
+def search_board(searched_board_id: int, lists_to_exclude: list[str] = IDS_OF_LISTS_TO_EXCLUDE) -> list[TrelloList]:
     response = make_trello_request(f'boards/{searched_board_id}/lists')
     source_lists = parse_json_response_to_list_of_lists(response=response)
     lists_to_exclude.append(DEFAULT_TARGET_LIST_ID)
@@ -17,7 +17,7 @@ def search_board(searched_board_id: int, lists_to_exclude: list[str] = IDS_OF_LI
     return source_lists
 
 
-def copy_card(card_id: str, target_list_id: str):
+def copy_card(card_id: Card, target_list_id: str):
     response = make_trello_request('cards', method='POST', data={
         'idList': target_list_id, 'idCardSource': card_id})
     copy_checked_items_from_checklists(

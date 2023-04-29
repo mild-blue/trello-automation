@@ -1,12 +1,14 @@
 import datetime
 import json
 
-from helpers.trello_api import make_trello_request
+from helper_functions.trello_api import make_trello_request
 
 
 def sort_list_by_due_date(id_list: str, reverse: bool = False) -> None:
     response = make_trello_request(f'lists/{id_list}/cards')
     cards = json.loads(response.text)
+    if not cards:
+        return
     id_due_date_dict = {}
     first_position = cards[0]['pos']
     for card in cards:

@@ -1,20 +1,20 @@
 import datetime
 import json
 
-from List import List
+from TrelloList import TrelloList
 from Card import Card
 
 import requests
 
-from my_settings import (LIST_IDS_TO_IGNORE,MEMBER_NAME_ID_PAIRS)
-from helpers.trello_api import make_trello_request
+from my_settings import (LIST_IDS_TO_IGNORE, MEMBER_NAME_ID_PAIRS)
+from helper_functions.trello_api import make_trello_request
 
 
-def parse_json_response_to_list_of_lists(response: requests.models.Response) -> list[List]:
+def parse_json_response_to_list_of_lists(response: requests.models.Response) -> list[TrelloList]:
     lists_on_board = json.loads(response.text)
     source_lists = []
     for searched_list in lists_on_board:
-        source_lists.append(List(searched_list['id']))
+        source_lists.append(TrelloList(searched_list['id']))
     return source_lists
 
 
@@ -37,7 +37,8 @@ def check_due_date(card_id: str, latest_due_date: datetime.date) -> bool:
     else:
         return False
 
-def search_list(searched_list: List, latest_due_date: datetime.date,
+
+def search_list(searched_list: TrelloList, latest_due_date: datetime.date,
                 do_not_require_members_on_card: bool = False) -> set[Card]:
     response = make_trello_request(f'lists/{searched_list.id}/cards')
     source_cards = parse_json_response_to_list_of_cards(response=response)

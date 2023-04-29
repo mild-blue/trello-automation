@@ -3,9 +3,11 @@ import logging
 
 from actions.copying import copy_cards_with_tagged_members_and_close_due_date_to_list
 from actions.moving import move_cards_with_close_due_date_between_lists
+from helper_functions.helpers import get_name_id_pairs_of_my_boards, get_name_id_pairs_of_board_members, \
+    get_board_list_name_id_pairs
 from my_settings import (DEFAULT_TARGET_LIST_ID, LIST_IDS_TO_SORT,
                          MOVE_FROM_LIST_IDS,
-                         NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
+                         NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH, BOARD_IDS)
 from actions.sorting import sort_list_by_due_date
 
 logger = logging.getLogger(__name__)
