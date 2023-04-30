@@ -97,17 +97,6 @@ def copy_card(card: Card, target_list_id: str, copy_labels: bool = False):
     copy_checked_items_from_checklists(card, json.loads(response.text)['id'])
 
 
-def check_due_date(card_id: str, latest_due_date: datetime.date) -> bool:
-    response = make_trello_request(f'cards/{card_id}/due')
-    date_on_card_dict = json.loads(response.text)
-    date_on_card = date_on_card_dict['_value']
-    if date_on_card:
-        card_date = datetime.datetime.strptime(date_on_card, '%Y-%m-%dT%H:%M:%S.%fZ').date()
-        return card_date <= latest_due_date
-    else:
-        return False
-
-
 def get_list_cards_ids(list_id: str) -> list:
     response = make_trello_request(f'lists/{list_id}/cards')
     response_dict = json.loads(response.text)
