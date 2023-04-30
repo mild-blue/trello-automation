@@ -84,8 +84,8 @@ def search_list(searched_list: TrelloList, latest_due_date: datetime.date,
     return valid_source_cards
 
 
-def copy_card(card: Card, target_list_id: str) -> None:
-    response = make_trello_request('cards', method='POST', data={'idList': target_list_id, 'idCardSource': card.id})
+def copy_card(card: Card, target_list: TrelloList) -> None:
+    response = make_trello_request('cards', method='POST', data={'idList': target_list.id, 'idCardSource': card.id})
     copy_checked_items_from_checklists(card, json.loads(response.text)['id'])
 
 
@@ -196,38 +196,40 @@ def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: d
                                                               target_list_id: str = DEFAULT_TARGET_LIST_ID) -> None:
     logger.info("Copying cards with tagged members and close due date to list...")
     card_ids_previously_copied = get_list_of_card_ids_previously_copied()
+    target_list = TrelloList(target_list_id, get_list_name(target_list_id))
+
     all_source_lists = []
     for board_id in BOARD_IDS:
-        logger.info("Getting list ids from board with id " + board_id + "...")
+        logger.info(f"Getting list ids from board with id {board_id}...")
         all_source_lists = all_source_lists + search_board(board_id)
     all_source_cards = set()
     for source_list in all_source_lists:
-        logger.info("Getting card ids from list '" + source_list.name + "' and latest due date "+ str(latest_due_date) + "...")
+        logger.info(f"Getting card ids from list '{source_list.name}' and latest due date{str(latest_due_date)}...")
         all_source_cards.update(search_list(searched_list=source_list, latest_due_date=latest_due_date))
     for source_card in all_source_cards:
         if source_card.id not in card_ids_previously_copied:
-            logger.info(f"Copying card '{source_card.name}' to list '{get_list_name(target_list_id)}'...")
-            copy_card(source_card, target_list_id)
+            logger.info(f"Copying card '{source_card.name}' to list '{target_list.name}'...")
+            copy_card(source_card, target_list)
 
     logger.info("Done!")
 
 
-def move_card(card_to_move: Card, target_list_id: str) -> None:
-    make_trello_request(f'cards/{card_to_move.id}', method='PUT', data={'idList': target_list_id})
+def move_card(card_to_move: Card, target_list: TrelloList) -> None:
+    make_trello_request(f'cards/{card_to_move.id}', method='PUT', data={'idList': target_list.id})
 
 
 def move_cards_with_close_due_date_between_lists(latest_due_date: datetime.date, source_list_id: str,
                                                  target_list_id: str) -> None:
-    source_list_name = get_list_name(source_list_id)
-    target_list_name = get_list_name(target_list_id)
+    source_list = TrelloList(source_list_id, get_list_name(source_list_id))
+    target_list = TrelloList(target_list_id, get_list_name(target_list_id))
 
-    logger.info(f"Moving cards from list {source_list_name} to list {target_list_name}...")
+    logger.info(f"Moving cards from list {source_list.name} to list {target_list.name}...")
 
     all_source_cards = set()
-    all_source_cards.update(search_list(searched_list=TrelloList(source_list_id, source_list_name),
+    all_source_cards.update(search_list(searched_list=source_list,
                                         latest_due_date=latest_due_date, do_not_require_members_on_card=True))
     for source_card in all_source_cards:
-        move_card(source_card, target_list_id)
+        move_card(source_card, target_list)
 
     logger.info("Done!")
 
