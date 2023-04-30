@@ -10,7 +10,7 @@ from my_settings import (BOARD_IDS, DEFAULT_TARGET_LIST_ID,
                          IDS_OF_LISTS_TO_EXCLUDE, LIST_IDS_TO_IGNORE,
                          LIST_IDS_TO_SORT, MEMBER_NAME_ID_PAIRS,
                          MOVE_FROM_LIST_IDS,
-                         NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
+                         NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH, INCLUDE_LABELS)
 from TrelloList import TrelloList
 
 logger = logging.getLogger(__name__)
@@ -84,8 +84,8 @@ def search_list(searched_list: TrelloList, latest_due_date: datetime.date,
     return valid_source_cards
 
 
-def copy_card(card: Card, target_list_id: str, copy_labels: bool = False):
-    if not copy_labels:
+def copy_card(card: Card, target_list_id: str):
+    if not INCLUDE_LABELS:
         response = make_trello_request('cards', method='POST', data={'idList': target_list_id,
                                                                      'keepFromSource': 'attachments,checklists,'
                                                                                        'customFields,comments,due,'
@@ -195,8 +195,7 @@ def copy_checked_items_from_checklists(investigated_card: Card, target_card_id: 
 
 
 def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: datetime.date,
-                                                              target_list_id: str = DEFAULT_TARGET_LIST_ID,
-                                                              copy_labels: bool = True) -> None:
+                                                              target_list_id: str = DEFAULT_TARGET_LIST_ID) -> None:
     logger.info('Copying cards with tagged members and close due date to list...')
 
     card_ids_previously_copied = get_list_of_card_ids_previously_copied()
@@ -211,29 +210,28 @@ def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: d
     for source_card in all_source_cards:
         if source_card.id not in card_ids_previously_copied:
             logger.info(f'Copying card {source_card.id} to list {target_list_id}...')
-            copy_card(source_card, target_list_id, copy_labels)
+            copy_card(source_card, target_list_id)
 
     logger.info('Done')
 
 
-def move_card(card_to_move: Card, target_list_id: str, save_labels: bool = True) -> None:
+def move_card(card_to_move: Card, target_list_id: str) -> None:
     data = data={'idList': target_list_id}
-    if not save_labels:
+    if not INCLUDE_LABELS:
         data={'idList': target_list_id, 'idLabels': ''}
     
     make_trello_request(f'cards/{card_to_move.id}', method='PUT', data=data)
 
 
 def move_cards_with_close_due_date_between_lists(latest_due_date: datetime.date, source_list_id: str,
-                                                 target_list_id: str, save_labels: bool = True) -> None:
+                                                 target_list_id: str) -> None:
     logger.info(f'Moving cards from list {source_list_id} to list {target_list_id}...')
-
 
     all_source_cards = set()
     all_source_cards.update(search_list(searched_list=TrelloList(source_list_id), latest_due_date=latest_due_date,
                                         do_not_require_members_on_card=True))
     for source_card in all_source_cards:
-        move_card(source_card, target_list_id, save_labels)
+        move_card(source_card, target_list_id)
 
     logger.info('Done')
 
@@ -244,10 +242,9 @@ def main():
     for move_from_list_id in MOVE_FROM_LIST_IDS:
         move_cards_with_close_due_date_between_lists(latest_due_date=latest_due_date,
                                                      source_list_id=move_from_list_id,
-                                                     target_list_id=DEFAULT_TARGET_LIST_ID,
-                                                     save_labels=True)
+                                                     target_list_id=DEFAULT_TARGET_LIST_ID)
     logger.info('Moving cards complete. Starting to copy cards...')
-    copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date=latest_due_date, copy_labels=False)
+    copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date=latest_due_date)
     logger.info('Copying cards complete. Starting to sort lists...')
 
     for sort_list_id in LIST_IDS_TO_SORT:
