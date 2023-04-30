@@ -89,7 +89,7 @@ def copy_card(card: Card, target_list_id: str):
         response = make_trello_request('cards', method='POST', data={'idList': target_list_id,
                                                                      'keepFromSource': 'attachments,checklists,'
                                                                                        'customFields,comments,due,'
-                                                                                       'start,members,start,stickers',
+                                                                                       'start,members,stickers',
                                                                      'idCardSource': card.id})
     else:
         response = make_trello_request('cards', method='POST', data={'idList': target_list_id, 'idCardSource': card.id})
