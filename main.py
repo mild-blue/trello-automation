@@ -7,9 +7,9 @@ import requests
 from Card import Card
 from my_secrets import TRELLO_KEY, TRELLO_TOKEN
 from my_settings import (BOARD_IDS, DEFAULT_TARGET_LIST_ID,
-                         IDS_OF_LISTS_TO_EXCLUDE, LIST_IDS_TO_IGNORE,
-                         LIST_IDS_TO_SORT, MEMBER_NAME_ID_PAIRS,
-                         MOVE_FROM_LIST_IDS,
+                         IDS_OF_LISTS_TO_EXCLUDE, INCLUDE_LABELS,
+                         LIST_IDS_TO_IGNORE, LIST_IDS_TO_SORT,
+                         MEMBER_NAME_ID_PAIRS, MOVE_FROM_LIST_IDS,
                          NUMBER_OF_DAYS_TO_CONSIDER_IN_THE_SEARCH)
 from TrelloList import TrelloList
 
@@ -84,8 +84,16 @@ def search_list(searched_list: TrelloList, latest_due_date: datetime.date,
     return valid_source_cards
 
 
-def copy_card(card: Card, target_list_id: str) -> None:
-    response = make_trello_request('cards', method='POST', data={'idList': target_list_id, 'idCardSource': card.id})
+def copy_card(card: Card, target_list_id: str):
+    if not INCLUDE_LABELS:
+        response = make_trello_request('cards', method='POST', data={'idList': target_list_id,
+                                                                     'keepFromSource': 'attachments,checklists,'
+                                                                                       'customFields,comments,due,'
+                                                                                       'start,members,stickers',
+                                                                     'idCardSource': card.id})
+    else:
+        response = make_trello_request('cards', method='POST', data={'idList': target_list_id, 'idCardSource': card.id})
+
     copy_checked_items_from_checklists(card, json.loads(response.text)['id'])
 
 
@@ -189,14 +197,16 @@ def copy_checked_items_from_checklists(investigated_card: Card, target_card_id: 
 def copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date: datetime.date,
                                                               target_list_id: str = DEFAULT_TARGET_LIST_ID) -> None:
     logger.info('Copying cards with tagged members and close due date to list...')
+
     card_ids_previously_copied = get_list_of_card_ids_previously_copied()
     all_source_lists = []
     for board_id in BOARD_IDS:
-        logger.info("Getting list ids from board with id " + board_id + "...")
+        logger.info('Getting list ids from board with id ' + board_id + '...')
         all_source_lists = all_source_lists + search_board(board_id)
     all_source_cards = set()
     for source_list in all_source_lists:
-        logger.info("Getting card ids from list with id " + source_list.id + " and latest due date "+ str(latest_due_date) + "...")
+        logger.info('Getting card ids from list with id ' + source_list.id + ' and latest due date ' + str(
+            latest_due_date) + '...')
         all_source_cards.update(search_list(searched_list=source_list, latest_due_date=latest_due_date))
     for source_card in all_source_cards:
         if source_card.id not in card_ids_previously_copied:
@@ -233,6 +243,7 @@ def main():
     logger.info('Moving cards complete. Starting to copy cards...')
     copy_cards_with_tagged_members_and_close_due_date_to_list(latest_due_date=latest_due_date)
     logger.info('Copying cards complete. Starting to sort lists...')
+
     for sort_list_id in LIST_IDS_TO_SORT:
         sort_list_by_due_date(sort_list_id)
     logger.info('Sorting lists complete. Finished!')
