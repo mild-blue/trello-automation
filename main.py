@@ -219,7 +219,7 @@ def sort_list_by_due_date(id_list: str, reverse: bool = False) -> None:
             id_due_date_dict[card['id']] = None
     id_due_date_sorted_dict = sorted(
         id_due_date_dict.items(),
-        key=lambda d: (d[1] is not None, d[1]),
+        key=lambda d: (d[1] is None, d[1]),
         reverse=reverse,
     )
 
