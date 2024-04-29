@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+import pytz
 
 import requests
 
@@ -216,7 +217,9 @@ def sort_list_by_due_date(id_list: str, reverse: bool = False) -> None:
     for card in cards:
         due_date = card.get('due')
         if due_date:
-            due_date = datetime.datetime.strptime(due_date[0:19], '%Y-%m-%dT%H:%M:%S')
+            due_date = datetime.datetime.strptime(due_date[0:19], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=pytz.utc)
+            due_date = due_date.astimezone(pytz.timezone('CET'))
+            due_date = due_date.date()
         else:
             due_date = None
         card_info_dict[card['id']] = (due_date, card['pos'])
@@ -229,13 +232,13 @@ def sort_list_by_due_date(id_list: str, reverse: bool = False) -> None:
     )
 
     # Update position in Trello
-    first_position = cards[0]['pos']
-    position = first_position
+    increment = 16384
+    position = increment
     for card_id, _ in sorted_cards:
         response = make_trello_request(
             f'cards/{card_id}', params={'pos': f'{position}'}, method='PUT'
         )
-        position += first_position
+        position += increment
 
 
 def copy_checked_items_from_checklists(investigated_card: Card, target_card_id: str):
