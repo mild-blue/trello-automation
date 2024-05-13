@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+import pytz
 
 import requests
 
@@ -204,31 +205,40 @@ def get_board_list_name_id_pairs(investigated_board_id: str) -> dict:
 
 def sort_list_by_due_date(id_list: str, reverse: bool = False) -> None:
     logger.info(f'Sorting list {id_list} by due date...')
+
     response = make_trello_request(f'lists/{id_list}/cards')
     cards = json.loads(response.text)
+
     if not cards:
         return
-    id_due_date_dict = {}
-    first_position = cards[0]['pos']
+
+    # Extract due date and position for each card
+    card_info_dict = {}
     for card in cards:
-        if card['due']:
-            id_due_date_dict[card['id']] = datetime.datetime.strptime(
-                card['due'][0:19], '%Y-%m-%dT%H:%M:%S'
-            )
+        due_date = card.get('due')
+        if due_date:
+            due_date = datetime.datetime.strptime(due_date[0:19], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=pytz.utc)
+            due_date = due_date.astimezone(pytz.timezone('CET'))
+            due_date = due_date.date()
         else:
-            id_due_date_dict[card['id']] = None
-    id_due_date_sorted_dict = sorted(
-        id_due_date_dict.items(),
-        key=lambda d: (d[1] is None, d[1]),
+            due_date = None
+        card_info_dict[card['id']] = (due_date, card['pos'])
+
+    # Sort the cards first by due date, then by position
+    sorted_cards = sorted(
+        card_info_dict.items(),
+        key=lambda item: (item[1][0] is None, item[1][0], item[1][1]),
         reverse=reverse,
     )
 
-    position = first_position
-    for id_due_date in id_due_date_sorted_dict:
+    # Update position in Trello
+    increment = 16384
+    position = increment
+    for card_id, _ in sorted_cards:
         response = make_trello_request(
-            f'cards/{id_due_date[0]}', params={'pos': f'{position}'}, method='PUT'
+            f'cards/{card_id}', params={'pos': f'{position}'}, method='PUT'
         )
-        position = position + first_position
+        position += increment
 
 
 def copy_checked_items_from_checklists(investigated_card: Card, target_card_id: str):
