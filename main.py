@@ -1,8 +1,8 @@
 import datetime
 import json
 import logging
-import pytz
 
+import pytz
 import requests
 
 from Card import Card
@@ -138,6 +138,8 @@ def copy_card(card: Card, target_list_id: str):
         )
 
     copy_checked_items_from_checklists(card, json.loads(response.text)['id'])
+    copy_original_card_notifications(card, json.loads(response.text)['id'])
+    copy_origianl_cover_status(card, json.loads(response.text)['id'])
 
 
 def get_list_cards_ids(list_id: str) -> list:
@@ -261,6 +263,32 @@ def copy_checked_items_from_checklists(investigated_card: Card, target_card_id: 
             )
 
 
+def copy_original_card_notifications(investigated_card: Card, target_card_id: str):
+    response = make_trello_request(f"cards/{investigated_card.id}")
+    card_dict = json.loads(response.text)
+
+    # dueReminder indicates the number of minutes before the due date when the user should be reminded.
+    # A value of -1 means that the user should not be reminded.
+    dueReminder = card_dict["dueReminder"]
+    make_trello_request(
+        f"cards/{target_card_id}", method="PUT", data={"dueReminder": dueReminder}
+    )
+
+
+def copy_original_cover_status(investigated_card: Card, target_card_id: str):
+    response = make_trello_request(f"cards/{investigated_card.id}")
+    card_dict = json.loads(response.text)
+
+    # idAttachmentCover is the ID of the attachment that is set as the cover image of the card.
+    # An empty string indicates that the copied card should not have a cover image.
+    manual_cover = card_dict["idAttachmentCover"]
+    make_trello_request(
+        f"cards/{target_card_id}",
+        method="PUT",
+        data={"idAttachmentCover": manual_cover},
+    )
+
+
 def copy_cards_with_tagged_members_and_close_due_date_to_list(
     latest_due_date: datetime.date, target_list_id: str = DEFAULT_TARGET_LIST_ID
 ) -> None:
@@ -329,7 +357,8 @@ def main():
         )
     logger.info('Moving cards complete. Starting to copy cards...')
     copy_cards_with_tagged_members_and_close_due_date_to_list(
-        latest_due_date=latest_due_date
+        latest_due_date=latest_due_date,
+        target_list_id=DEFAULT_TARGET_LIST_ID,
     )
     logger.info('Copying cards complete. Starting to sort lists...')
 
