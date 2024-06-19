@@ -288,16 +288,6 @@ def copy_original_cover_status(investigated_card: Card, target_card_id: str):
         data={"idAttachmentCover": manual_cover},
     )
 
-    # If the card has a cover, the id of the attachment that is the cover image
-    # If the copied card should have a cover set to ""
-    manual_cover = card_dict["idAttachmentCover"]
-
-    make_trello_request(
-        f"cards/{target_card_id}",
-        method="PUT",
-        data={"idAttachmentCover": manual_cover},
-    )
-
 
 def copy_cards_with_tagged_members_and_close_due_date_to_list(
     latest_due_date: datetime.date, target_list_id: str = DEFAULT_TARGET_LIST_ID
