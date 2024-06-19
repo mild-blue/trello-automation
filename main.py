@@ -262,18 +262,31 @@ def copy_checked_items_from_checklists(investigated_card: Card, target_card_id: 
                 params=params,
             )
 
+
 def copy_original_card_notifications(investigated_card: Card, target_card_id: str):
-    response = make_trello_request(f'cards/{investigated_card.id}') 
+    response = make_trello_request(f"cards/{investigated_card.id}")
     card_dict = json.loads(response.text)
 
-    # dueRemainder  = number of minutes before the due date when the user should be reminded or -1 if the user should not be reminded
-    dueReminder = card_dict['dueReminder']
-    make_trello_request(f'cards/{target_card_id}', method='PUT', data={'dueReminder': dueReminder})
+    # dueReminder indicates the number of minutes before the due date when the user should be reminded.
+    # A value of -1 means that the user should not be reminded.
+    dueReminder = card_dict["dueReminder"]
+    make_trello_request(
+        f"cards/{target_card_id}", method="PUT", data={"dueReminder": dueReminder}
+    )
 
-def copy_origianl_cover_status(investigated_card: Card, target_card_id: str):
-    response = make_trello_request(f'cards/{investigated_card.id}') 
+
+def copy_original_cover_status(investigated_card: Card, target_card_id: str):
+    response = make_trello_request(f"cards/{investigated_card.id}")
     card_dict = json.loads(response.text)
 
+    # idAttachmentCover is the ID of the attachment that is set as the cover image of the card.
+    # An empty string indicates that the copied card should not have a cover image.
+    manual_cover = card_dict["idAttachmentCover"]
+    make_trello_request(
+        f"cards/{target_card_id}",
+        method="PUT",
+        data={"idAttachmentCover": manual_cover},
+    )
 
     # If the card has a cover, the id of the attachment that is the cover image
     # If the copied card should have a cover set to ""
