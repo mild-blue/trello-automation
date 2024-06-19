@@ -139,6 +139,7 @@ def copy_card(card: Card, target_list_id: str):
 
     copy_checked_items_from_checklists(card, json.loads(response.text)['id'])
     copy_original_card_notifications(card, json.loads(response.text)['id'])
+    copy_origianl_cover_status(card, json.loads(response.text)['id'])
 
 
 def get_list_cards_ids(list_id: str) -> list:
@@ -269,8 +270,21 @@ def copy_original_card_notifications(investigated_card: Card, target_card_id: st
     dueReminder = card_dict['dueReminder']
     make_trello_request(f'cards/{target_card_id}', method='PUT', data={'dueReminder': dueReminder})
 
+def copy_origianl_cover_status(investigated_card: Card, target_card_id: str):
+    response = make_trello_request(f'cards/{investigated_card.id}') 
+    card_dict = json.loads(response.text)
 
-            
+
+    # If the card has a cover, the id of the attachment that is the cover image
+    # If the copied card should have a cover set to ""
+    manual_cover = card_dict["idAttachmentCover"]
+
+    make_trello_request(
+        f"cards/{target_card_id}",
+        method="PUT",
+        data={"idAttachmentCover": manual_cover},
+    )
+
 
 def copy_cards_with_tagged_members_and_close_due_date_to_list(
     latest_due_date: datetime.date, target_list_id: str = DEFAULT_TARGET_LIST_ID
