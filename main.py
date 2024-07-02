@@ -140,7 +140,7 @@ def copy_card(card: Card, target_list_id: str):
 
     copy_checked_items_from_checklists(card, json.loads(response.text)['id'])
     copy_original_card_notifications(card, json.loads(response.text)['id'])
-    copy_origianl_cover_status(card, json.loads(response.text)['id'])
+    copy_original_cover_status(card, json.loads(response.text)['id'])
 
 
 def get_list_cards_ids(list_id: str) -> list:
@@ -358,8 +358,7 @@ def main():
         )
     logger.info('Moving cards complete. Starting to copy cards...')
     copy_cards_with_tagged_members_and_close_due_date_to_list(
-        latest_due_date=latest_due_date,
-        target_list_id=DEFAULT_TARGET_LIST_ID,
+        latest_due_date=latest_due_date
     )
     logger.info('Copying cards complete. Starting to sort lists...')
 
