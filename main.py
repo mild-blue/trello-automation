@@ -46,6 +46,7 @@ def parse_json_response_to_list_of_cards(
                 due_date=card['badges']['due'],
                 member_ids=card['idMembers'],
                 completed=card['badges']['dueComplete'],
+                name=card['name']
             )
         )
     return source_cards
@@ -313,7 +314,7 @@ def copy_cards_with_tagged_members_and_close_due_date_to_list(
         )
     for source_card in all_source_cards:
         if source_card.id not in card_ids_previously_copied:
-            logger.info(f'Copying card {source_card.id} to list {target_list_id}...')
+            logger.info(f'Copying card {source_card.name} to list {target_list_id}...')
             copy_card(source_card, target_list_id)
 
     logger.info('Done')
