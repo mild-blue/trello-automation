@@ -140,7 +140,7 @@ def copy_card(card: Card, target_list_id: str):
 
     copy_checked_items_from_checklists(card, json.loads(response.text)['id'])
     copy_original_card_notifications(card, json.loads(response.text)['id'])
-    copy_original_cover_status(card, json.loads(response.text)['id'])
+    remove_cover(json.loads(response.text)['id'])
 
 
 def get_list_cards_ids(list_id: str) -> list:
@@ -276,17 +276,11 @@ def copy_original_card_notifications(investigated_card: Card, target_card_id: st
     )
 
 
-def copy_original_cover_status(investigated_card: Card, target_card_id: str):
-    response = make_trello_request(f'cards/{investigated_card.id}')
-    card_dict = json.loads(response.text)
-
-    # idAttachmentCover is the ID of the attachment that is set as the cover image of the card.
-    # An empty string indicates that the copied card should not have a cover image.
-    manual_cover = card_dict['idAttachmentCover']
+def remove_cover(target_card_id: str):
     make_trello_request(
         f'cards/{target_card_id}',
         method='PUT',
-        data={'idAttachmentCover': manual_cover},
+        data={'idAttachmentCover': ''},
     )
 
 
