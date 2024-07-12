@@ -1,8 +1,8 @@
 import datetime
 import json
 import logging
-import pytz
 
+import pytz
 import requests
 
 from Card import Card
@@ -25,7 +25,7 @@ logger.addHandler(console_handler)
 
 
 def parse_json_response_to_list_of_lists(
-    response: requests.models.Response,
+        response: requests.models.Response,
 ) -> list[TrelloList]:
     lists_on_board = json.loads(response.text)
     source_lists = []
@@ -35,7 +35,7 @@ def parse_json_response_to_list_of_lists(
 
 
 def parse_json_response_to_list_of_cards(
-    response: requests.models.Response,
+        response: requests.models.Response,
 ) -> list[Card]:
     cards_on_list = json.loads(response.text)
     source_cards = []
@@ -46,13 +46,14 @@ def parse_json_response_to_list_of_cards(
                 due_date=card['badges']['due'],
                 member_ids=card['idMembers'],
                 completed=card['badges']['dueComplete'],
+                name=card['name']
             )
         )
     return source_cards
 
 
 def make_trello_request(
-    url_add_on: str, method: str = 'GET', params: dict = None, data: dict = None
+        url_add_on: str, method: str = 'GET', params: dict = None, data: dict = None
 ):
     headers = {'Accept': 'application/json'}
     full_url = f'https://api.trello.com/1/{url_add_on}'
@@ -78,7 +79,7 @@ def make_trello_request(
 
 
 def search_board(
-    searched_board_id: int, lists_to_exclude: list[str] = IDS_OF_LISTS_TO_EXCLUDE
+        searched_board_id: int, lists_to_exclude: list[str] = IDS_OF_LISTS_TO_EXCLUDE
 ) -> list[TrelloList]:
     response = make_trello_request(f'boards/{searched_board_id}/lists')
     source_lists = parse_json_response_to_list_of_lists(response=response)
@@ -92,9 +93,9 @@ def search_board(
 
 
 def search_list(
-    searched_list: TrelloList,
-    latest_due_date: datetime.date,
-    do_not_require_members_on_card: bool = False,
+        searched_list: TrelloList,
+        latest_due_date: datetime.date,
+        do_not_require_members_on_card: bool = False,
 ) -> set[Card]:
     response = make_trello_request(f'lists/{searched_list.id}/cards')
     source_cards = parse_json_response_to_list_of_cards(response=response)
@@ -106,12 +107,12 @@ def search_list(
             ).date()
             for name in MEMBER_NAME_ID_PAIRS:
                 if (
-                    (
-                        MEMBER_NAME_ID_PAIRS[name] in card.member_IDs
-                        or do_not_require_members_on_card
-                    )
-                    and card_date <= latest_due_date
-                    and not card.completed
+                        (
+                                MEMBER_NAME_ID_PAIRS[name] in card.member_IDs
+                                or do_not_require_members_on_card
+                        )
+                        and card_date <= latest_due_date
+                        and not card.completed
                 ):
                     valid_source_cards.add(card)
     return valid_source_cards
@@ -125,8 +126,8 @@ def copy_card(card: Card, target_list_id: str):
             data={
                 'idList': target_list_id,
                 'keepFromSource': 'attachments,checklists,'
-                'customFields,comments,due,'
-                'start,members,stickers',
+                                  'customFields,comments,due,'
+                                  'start,members,stickers',
                 'idCardSource': card.id,
             },
         )
@@ -138,6 +139,8 @@ def copy_card(card: Card, target_list_id: str):
         )
 
     copy_checked_items_from_checklists(card, json.loads(response.text)['id'])
+    copy_original_card_notifications(card, json.loads(response.text)['id'])
+    remove_cover(json.loads(response.text)['id'])
 
 
 def get_list_cards_ids(list_id: str) -> list:
@@ -248,10 +251,10 @@ def copy_checked_items_from_checklists(investigated_card: Card, target_card_id: 
     target_checklists_dict = json.loads(response_target.text)
 
     for checklist_source, checklist_target in zip(
-        source_checklists_dict, target_checklists_dict
+            source_checklists_dict, target_checklists_dict
     ):
         for check_item_source, check_item_target in zip(
-            checklist_source['checkItems'], checklist_target['checkItems']
+                checklist_source['checkItems'], checklist_target['checkItems']
         ):
             params = {'state': check_item_source['state']}
             make_trello_request(
@@ -261,8 +264,28 @@ def copy_checked_items_from_checklists(investigated_card: Card, target_card_id: 
             )
 
 
+def copy_original_card_notifications(investigated_card: Card, target_card_id: str):
+    response = make_trello_request(f'cards/{investigated_card.id}')
+    card_dict = json.loads(response.text)
+
+    # dueReminder indicates the number of minutes before the due date when the user should be reminded.
+    # A value of -1 means that the user should not be reminded.
+    dueReminder = card_dict['dueReminder']
+    make_trello_request(
+        f'cards/{target_card_id}', method='PUT', data={'dueReminder': dueReminder}
+    )
+
+
+def remove_cover(target_card_id: str):
+    make_trello_request(
+        f'cards/{target_card_id}',
+        method='PUT',
+        data={'idAttachmentCover': ''},
+    )
+
+
 def copy_cards_with_tagged_members_and_close_due_date_to_list(
-    latest_due_date: datetime.date, target_list_id: str = DEFAULT_TARGET_LIST_ID
+        latest_due_date: datetime.date, target_list_id: str = DEFAULT_TARGET_LIST_ID
 ) -> None:
     logger.info('Copying cards with tagged members and close due date to list...')
 
@@ -285,7 +308,7 @@ def copy_cards_with_tagged_members_and_close_due_date_to_list(
         )
     for source_card in all_source_cards:
         if source_card.id not in card_ids_previously_copied:
-            logger.info(f'Copying card {source_card.id} to list {target_list_id}...')
+            logger.info(f'Copying card {source_card.name} to list {target_list_id}...')
             copy_card(source_card, target_list_id)
 
     logger.info('Done')
@@ -298,7 +321,7 @@ def move_card(card_to_move: Card, target_list_id: str) -> None:
 
 
 def move_cards_with_close_due_date_between_lists(
-    latest_due_date: datetime.date, source_list_id: str, target_list_id: str
+        latest_due_date: datetime.date, source_list_id: str, target_list_id: str
 ) -> None:
     logger.info(f'Moving cards from list {source_list_id} to list {target_list_id}...')
 
