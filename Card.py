@@ -5,3 +5,11 @@ class Card:
         self.member_IDs = member_ids
         self.completed = completed
         self.name = name
+
+    def __eq__(self, other):
+        if not isinstance(other, Card):
+            return NotImplemented
+        return self.id == other.id
+
+    def __hash__(self):
+        return hash(self.id)

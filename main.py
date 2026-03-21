@@ -1,8 +1,7 @@
 import datetime
-import json
 import logging
+from zoneinfo import ZoneInfo
 
-import pytz
 import requests
 
 from Card import Card
@@ -27,7 +26,7 @@ logger.addHandler(console_handler)
 def parse_json_response_to_list_of_lists(
         response: requests.models.Response,
 ) -> list[TrelloList]:
-    lists_on_board = json.loads(response.text)
+    lists_on_board = response.json()
     source_lists = []
     for searched_list in lists_on_board:
         source_lists.append(TrelloList(searched_list['id']))
@@ -37,7 +36,7 @@ def parse_json_response_to_list_of_lists(
 def parse_json_response_to_list_of_cards(
         response: requests.models.Response,
 ) -> list[Card]:
-    cards_on_list = json.loads(response.text)
+    cards_on_list = response.json()
     source_cards = []
     for card in cards_on_list:
         source_cards.append(
@@ -63,7 +62,7 @@ def make_trello_request(
 
     if method == 'GET' and data:
         logger.warning(f'GET request with body: {data}')
-        data = {}
+        data = None
 
     response = requests.request(
         method=method,
@@ -79,8 +78,10 @@ def make_trello_request(
 
 
 def search_board(
-        searched_board_id: int, lists_to_exclude: list[str] = IDS_OF_LISTS_TO_EXCLUDE
+        searched_board_id: str, lists_to_exclude: list[str] = None
 ) -> list[TrelloList]:
+    if lists_to_exclude is None:
+        lists_to_exclude = list(IDS_OF_LISTS_TO_EXCLUDE)
     response = make_trello_request(f'boards/{searched_board_id}/lists')
     source_lists = parse_json_response_to_list_of_lists(response=response)
     lists_to_exclude.append(DEFAULT_TARGET_LIST_ID)
@@ -138,14 +139,15 @@ def copy_card(card: Card, target_list_id: str):
             data={'idList': target_list_id, 'idCardSource': card.id},
         )
 
-    copy_checked_items_from_checklists(card, json.loads(response.text)['id'])
-    copy_original_card_notifications(card, json.loads(response.text)['id'])
-    remove_cover(json.loads(response.text)['id'])
+    new_card_id = response.json()['id']
+    copy_checked_items_from_checklists(card, new_card_id)
+    copy_original_card_notifications(card, new_card_id)
+    remove_cover(new_card_id)
 
 
 def get_list_cards_ids(list_id: str) -> list:
     response = make_trello_request(f'lists/{list_id}/cards')
-    response_dict = json.loads(response.text)
+    response_dict = response.json()
     card_id_list = []
     for card in response_dict:
         card_id_list.append(card['id'])
@@ -155,7 +157,7 @@ def get_list_cards_ids(list_id: str) -> list:
 def get_source_card_id(card_id: str) -> str:
     payload = {'filter': 'copyCard'}
     response = make_trello_request(f'cards/{card_id}/actions', params=payload)
-    response_list = json.loads(response.text)
+    response_list = response.json()
     if response_list:
         source_id = response_list[0]['data']['cardSource']['id']
         return source_id
@@ -173,13 +175,13 @@ def get_list_of_card_ids_previously_copied() -> list:
 
 def get_name_id_pairs_of_my_boards():
     response_members = make_trello_request('members/me')
-    response_members_dict = json.loads(response_members.text)
+    response_members_dict = response_members.json()
     print("IDs of boards I'm a member of:")
     ids = response_members_dict['idBoards']
     id_dictionary = {}
     for identity in ids:
         response_board = make_trello_request(f'boards/{identity}')
-        response_board_dict = json.loads(response_board.text)
+        response_board_dict = response_board.json()
         id_dictionary[response_board_dict['name']] = identity
         print(response_board_dict['name'] + ' - ' + identity)
     return id_dictionary
@@ -187,7 +189,7 @@ def get_name_id_pairs_of_my_boards():
 
 def get_name_id_pairs_of_board_members(investigated_board_id: str) -> dict:
     members_json = make_trello_request(f'boards/{investigated_board_id}/members')
-    members = json.loads(members_json.text)
+    members = members_json.json()
     board_members_ids = {}
     for member in members:
         board_members_ids[member['fullName']] = member['id']
@@ -197,7 +199,7 @@ def get_name_id_pairs_of_board_members(investigated_board_id: str) -> dict:
 
 def get_board_list_name_id_pairs(investigated_board_id: str) -> dict:
     response = make_trello_request(f'boards/{investigated_board_id}/lists')
-    lists_on_a_board_dict = json.loads(response.text)
+    lists_on_a_board_dict = response.json()
     print('Name ID pairs of lists on a board', investigated_board_id)
     board_list_name_id_pairs_dict = {}
     for list_on_a_board in lists_on_a_board_dict:
@@ -210,7 +212,7 @@ def sort_list_by_due_date(id_list: str, reverse: bool = False) -> None:
     logger.info(f'Sorting list {id_list} by due date...')
 
     response = make_trello_request(f'lists/{id_list}/cards')
-    cards = json.loads(response.text)
+    cards = response.json()
 
     if not cards:
         return
@@ -220,8 +222,8 @@ def sort_list_by_due_date(id_list: str, reverse: bool = False) -> None:
     for card in cards:
         due_date = card.get('due')
         if due_date:
-            due_date = datetime.datetime.strptime(due_date[0:19], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=pytz.utc)
-            due_date = due_date.astimezone(pytz.timezone('CET'))
+            due_date = datetime.datetime.strptime(due_date[0:19], '%Y-%m-%dT%H:%M:%S').replace(tzinfo=ZoneInfo('UTC'))
+            due_date = due_date.astimezone(ZoneInfo('Europe/Berlin'))
             due_date = due_date.date()
         else:
             due_date = None
@@ -246,9 +248,9 @@ def sort_list_by_due_date(id_list: str, reverse: bool = False) -> None:
 
 def copy_checked_items_from_checklists(investigated_card: Card, target_card_id: str):
     response_source = make_trello_request(f'cards/{investigated_card.id}/checklists')
-    source_checklists_dict = json.loads(response_source.text)
+    source_checklists_dict = response_source.json()
     response_target = make_trello_request(f'cards/{target_card_id}/checklists')
-    target_checklists_dict = json.loads(response_target.text)
+    target_checklists_dict = response_target.json()
 
     for checklist_source, checklist_target in zip(
             source_checklists_dict, target_checklists_dict
@@ -266,14 +268,15 @@ def copy_checked_items_from_checklists(investigated_card: Card, target_card_id: 
 
 def copy_original_card_notifications(investigated_card: Card, target_card_id: str):
     response = make_trello_request(f'cards/{investigated_card.id}')
-    card_dict = json.loads(response.text)
+    card_dict = response.json()
 
     # dueReminder indicates the number of minutes before the due date when the user should be reminded.
     # A value of -1 means that the user should not be reminded.
-    dueReminder = card_dict['dueReminder']
-    make_trello_request(
-        f'cards/{target_card_id}', method='PUT', data={'dueReminder': dueReminder}
-    )
+    dueReminder = card_dict.get('dueReminder')
+    if dueReminder is not None:
+        make_trello_request(
+            f'cards/{target_card_id}', method='PUT', data={'dueReminder': dueReminder}
+        )
 
 
 def remove_cover(target_card_id: str):

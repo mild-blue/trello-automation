@@ -4,7 +4,7 @@ A tool to enhance Trello experience.
 
 ## Setup
 
-1. Install Python 3.9 or newer.
+1. Install Python 3.9 or newer (required for `zoneinfo` module).
 2. Create a Python environment from `requirements.txt`.
 3. Obtain a Trello API key and token from [trello.com/app-key](https://trello.com/app-key) and save them in `my_secrets.py` (refer to `my_secrets_example.py`).
 4. Run `pre-commit install` to set up the pre-commit hook, which will run automatically on `git commit` or use `pre-commit run --all-files`.
